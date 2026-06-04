@@ -1,0 +1,16 @@
+topic,question,correct_answer,option_1,option_2,option_3,option_4
+Neural Networks,What is neurons?,neurons,contain,neurons,learning,
+Neural Networks,What is learning?,learning,contain,learning,activation,
+Neural Networks,How does activation work?,activation,activation,contain,neurons,weights
+Neural Networks,Explain weights.,weights,activation,weights,neurons,
+Neural Networks,What is contain?,contain,learning,contain,neurons,weights
+Database Management Systems,Explain organize.,organize,organize,relational,systems,
+Database Management Systems,How does efficiently work?,efficiently,efficiently,databases,relational,
+Database Management Systems,How does systems work?,systems,systems,relational,databases,
+Database Management Systems,Explain databases.,databases,databases,relational,systems,organize
+Database Management Systems,Explain relational.,relational,databases,relational,organize,
+Operating Systems,Explain performance.,performance,handles,systems,performance,
+Operating Systems,What is the purpose of hardware?,hardware,operating,systems,hardware,
+Operating Systems,Which statement best describes handles?,handles,operating,systems,handles,
+Operating Systems,Explain operating.,operating,hardware,operating,handles,performance
+Operating Systems,Explain systems.,systems,performance,operating,hardware,systems
