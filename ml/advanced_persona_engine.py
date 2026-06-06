@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import joblib
 
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler
@@ -38,24 +39,27 @@ print(cognitive_df.shape)
 # PREPARE COGNITIVE FEATURES
 # =========================
 
-cognitive_features = cognitive_df[[
-    "attention_score",
-    "confusion_score",
-    "boredom_score",
-    "cognitive_overload_score"
-]].copy()
+cognitive_features = cognitive_df[
+    [
+        "attention_score",
+        "confusion_score",
+        "boredom_score",
+        "cognitive_overload_score"
+    ]
+].copy()
 
 # =========================
 # SYNTHETIC MAPPING
 # =========================
 
-print("\nMapping cognitive intelligence to students...")
-
-# Repeat cognitive scores to match academic dataset size
+print(
+    "\nMapping cognitive intelligence to students..."
+)
 
 repeat_count = int(
     np.ceil(
-        len(academic_df) / len(cognitive_features)
+        len(academic_df)
+        / len(cognitive_features)
     )
 )
 
@@ -85,28 +89,35 @@ persona_df = pd.concat(
     axis=1
 )
 
-print("\nMerged Multimodal Dataset Shape:")
+print(
+    "\nMerged Multimodal Dataset Shape:"
+)
+
 print(persona_df.shape)
 
 # =========================
 # SELECT FEATURES
 # =========================
 
-print("\nPreparing persona intelligence features...")
+print(
+    "\nPreparing persona intelligence features..."
+)
 
-persona_features = persona_df[[
-    "total_clicks",
-    "avg_score",
-    "active_days",
-    "engagement_variability",
-    "inactivity_days",
-    "engagement_slope",
-    "assessment_consistency",
-    "attention_score",
-    "confusion_score",
-    "boredom_score",
-    "cognitive_overload_score"
-]]
+persona_features = persona_df[
+    [
+        "total_clicks",
+        "avg_score",
+        "active_days",
+        "engagement_variability",
+        "inactivity_days",
+        "engagement_slope",
+        "assessment_consistency",
+        "attention_score",
+        "confusion_score",
+        "boredom_score",
+        "cognitive_overload_score"
+    ]
+]
 
 # =========================
 # SCALE FEATURES
@@ -122,7 +133,9 @@ scaled_features = scaler.fit_transform(
 # KMEANS CLUSTERING
 # =========================
 
-print("\nTraining multimodal persona clustering engine...")
+print(
+    "\nTraining multimodal persona clustering engine..."
+)
 
 kmeans = KMeans(
     n_clusters=6,
@@ -143,72 +156,130 @@ persona_df["persona_cluster"] = (
 # =========================
 
 persona_map = {
+
     0: "Silent Isolator",
+
     1: "Burnout Pattern",
+
     2: "Anxiety-Spike Learner",
+
     3: "Passive Watcher",
+
     4: "Consistent Learner",
+
     5: "Last-Minute Survivor"
+
 }
 
 persona_df["persona"] = persona_df[
     "persona_cluster"
-].map(persona_map)
+].map(
+    persona_map
+)
 
 # =========================
 # STABILITY SCORE
 # =========================
 
-print("\nGenerating behavioral stability scores...")
+print(
+    "\nGenerating behavioral stability scores..."
+)
 
 persona_df["stability_score"] = (
+
     100
     - (
-        persona_df["engagement_variability"]
-        + persona_df["confusion_score"]
-        + persona_df["cognitive_overload_score"]
+
+        persona_df[
+            "engagement_variability"
+        ]
+
+        + persona_df[
+            "confusion_score"
+        ]
+
+        + persona_df[
+            "cognitive_overload_score"
+        ]
+
     ) / 3
+
 )
 
 persona_df["stability_score"] = (
     persona_df["stability_score"]
-    .clip(lower=0, upper=100)
+    .clip(
+        lower=0,
+        upper=100
+    )
 )
 
 # =========================
 # INTERVENTION STYLE
 # =========================
 
-def intervention_strategy(persona):
+def intervention_strategy(
+    persona
+):
 
     if persona == "Silent Isolator":
-        return "Social engagement support"
+
+        return (
+            "Social engagement support"
+        )
 
     elif persona == "Burnout Pattern":
-        return "Mental wellness intervention"
 
-    elif persona == "Anxiety-Spike Learner":
-        return "Guided pacing and stress reduction"
+        return (
+            "Mental wellness intervention"
+        )
 
-    elif persona == "Passive Watcher":
-        return "Interactive participation encouragement"
+    elif persona == (
+        "Anxiety-Spike Learner"
+    ):
 
-    elif persona == "Consistent Learner":
-        return "Advanced learning opportunities"
+        return (
+            "Guided pacing and stress reduction"
+        )
+
+    elif persona == (
+        "Passive Watcher"
+    ):
+
+        return (
+            "Interactive participation encouragement"
+        )
+
+    elif persona == (
+        "Consistent Learner"
+    ):
+
+        return (
+            "Advanced learning opportunities"
+        )
 
     else:
-        return "Deadline management coaching"
 
-persona_df["intervention_style"] = (
+        return (
+            "Deadline management coaching"
+        )
+
+persona_df[
+    "intervention_style"
+] = (
     persona_df["persona"]
-    .apply(intervention_strategy)
+    .apply(
+        intervention_strategy
+    )
 )
 
 # =========================
 # PERSONA DISTRIBUTION
 # =========================
 
-print("\nPersona Distribution:")
+print(
+    "\nPersona Distribution:"
+)
 
 print(
     persona_df["persona"]
@@ -219,18 +290,24 @@ print(
 # PERSONA PREVIEW
 # =========================
 
-print("\nPersona Intelligence Preview:")
+print(
+    "\nPersona Intelligence Preview:"
+)
 
 print(
-    persona_df[[
-        "id_student",
-        "persona",
-        "stability_score",
-        "attention_score",
-        "confusion_score",
-        "cognitive_overload_score",
-        "intervention_style"
-    ]].head(10)
+
+    persona_df[
+        [
+            "id_student",
+            "persona",
+            "stability_score",
+            "attention_score",
+            "confusion_score",
+            "cognitive_overload_score",
+            "intervention_style"
+        ]
+    ].head(10)
+
 )
 
 # =========================
@@ -238,15 +315,24 @@ print(
 # =========================
 
 cluster_centers = pd.DataFrame(
+
     kmeans.cluster_centers_,
-    columns=persona_features.columns
+
+    columns=
+    persona_features.columns
+
 )
 
-print("\nCluster Centers:")
-print(cluster_centers)
+print(
+    "\nCluster Centers:"
+)
+
+print(
+    cluster_centers
+)
 
 # =========================
-# SAVE RESULTS
+# SAVE DATASET
 # =========================
 
 persona_df.to_csv(
@@ -254,6 +340,28 @@ persona_df.to_csv(
     index=False
 )
 
-print("\nAdvanced persona profiles saved successfully!")
+print(
+    "\nAdvanced persona profiles saved successfully!"
+)
 
-print("\nAdvanced Multimodal Persona Intelligence Completed!")
+# =========================
+# SAVE MODEL
+# =========================
+
+joblib.dump(
+    kmeans,
+    "persona_kmeans.pkl"
+)
+
+joblib.dump(
+    scaler,
+    "persona_scaler.pkl"
+)
+
+print(
+    "\nPersona model saved successfully!"
+)
+
+print(
+    "\nAdvanced Multimodal Persona Intelligence Completed!"
+)

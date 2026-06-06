@@ -77,6 +77,32 @@ def track_cognitive_behavior(
         )
 
         # =========================
+        # DEBUG: Log full raw payload
+        # from frontend BEFORE any
+        # feature engineering.
+        #
+        # HOW TO READ THIS:
+        # - If values here are 0/null →
+        #   frontend stale closure bug.
+        #   Fix: ReactPlayer refs (already
+        #   done in Cognitive.tsx fix).
+        # - If values here are correct →
+        #   Supabase insert is the issue.
+        #   Check RLS policies or column types.
+        # =========================
+
+        print(
+            "COGNITIVE PAYLOAD:",
+            payload
+        )
+
+        print(
+            "WATCH:", watch_duration,
+            "PAUSE:", pause_count,
+            "SEEK:", seek_count
+        )
+
+        # =========================
         # CREATE FEATURE VECTOR
         # =========================
 
@@ -269,10 +295,17 @@ def track_cognitive_behavior(
 
         try:
 
-            # STEP 3: Added watch_duration, pause_count, seek_count
-            supabase.table(
-                "cognitive_metrics"
-            ).insert({
+            # =========================
+            # DEBUG: Log exactly what is
+            # being inserted into Supabase.
+            # If watch_duration/pause_count/
+            # seek_count are 0 here but
+            # COGNITIVE PAYLOAD showed correct
+            # values, there is a type cast
+            # or RLS policy blocking the write.
+            # =========================
+
+            insert_payload = {
 
                 "user_id": user_id,
 
@@ -294,7 +327,18 @@ def track_cognitive_behavior(
 
                 "recommendations": recommendations
 
-            }).execute()
+            }
+
+            print(
+                "SUPABASE INSERT PAYLOAD:",
+                insert_payload
+            )
+
+            supabase.table(
+                "cognitive_metrics"
+            ).insert(
+                insert_payload
+            ).execute()
 
             activity_records = [
 

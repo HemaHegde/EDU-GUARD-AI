@@ -21,9 +21,6 @@ from routes.mentor_routes import (
     router as mentor_router
 )
 
-from routes.quiz_routes import (
-    router as quiz_router
-)
 
 from routes.video_routes import (
     router as video_router
@@ -120,15 +117,7 @@ app.include_router(
 
 )
 
-app.include_router(
 
-    quiz_router,
-
-    prefix="/quiz",
-
-    tags=["Quiz + Flashcards"]
-
-)
 
 app.include_router(
 

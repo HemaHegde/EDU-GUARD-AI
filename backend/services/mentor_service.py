@@ -1,10 +1,22 @@
-
 import os
 import faiss
 import numpy as np
 import pandas as pd
+import ollama
+
+from datetime import datetime
 
 from sentence_transformers import SentenceTransformer
+
+from config.supabase_client import supabase
+
+from services.risk_service import (
+    get_student_risk_service
+)
+
+from services.persona_service import (
+    get_student_persona
+)
 
 # =========================
 # BASE DIRECTORY
@@ -70,173 +82,290 @@ model = SentenceTransformer(
 # ASK MENTOR
 # =========================
 
-def ask_mentor(question: str):
+def ask_mentor(
+    user_id: str,
+    question: str
+):
 
-    # =========================
-    # EMBED QUESTION
-    # =========================
+    try:
 
-    question_embedding = model.encode(
-        [question]
-    )
+        # =========================
+        # LOAD STUDENT PROFILE
+        # =========================
 
-    question_embedding = np.array(
-        question_embedding,
-        dtype=np.float32
-    )
+        profile_response = (
+            supabase.table("profiles")
+            .select("*")
+            .eq("id", user_id)
+            .execute()
+        )
 
-    # =========================
-    # SEARCH FAISS
-    # =========================
+        student_name = "Student"
 
-    distances, indices = index.search(
-        question_embedding,
-        k=2
-    )
+        if profile_response.data:
 
-    retrieved_chunks = []
+            student_name = (
+                profile_response.data[0]
+                .get("full_name", "Student")
+            )
 
-    for idx in indices[0]:
+        # =========================
+        # LOAD PERSONA DATA
+        # =========================
 
-        row = chunk_df.iloc[idx]
+        persona_data = get_student_persona(
+            user_id
+        )
 
-        retrieved_chunks.append({
+        persona = persona_data.get(
+            "persona",
+            "Unknown Persona"
+        )
 
-            "topic":
-            row["topic"],
+        intervention_style = (
+            persona_data.get(
+                "intervention_style",
+                ""
+            )
+        )
 
-            "chunk":
-            row["chunk"]
+        # =========================
+        # LOAD RISK DATA
+        # =========================
 
-        })
+        risk_data = get_student_risk_service(
+            user_id
+        )
 
-    # =========================
-    # COMBINE CONTEXT
-    # =========================
+        risk_score = risk_data.get(
+            "risk_score",
+            0
+        )
 
-    combined_context = " ".join(
+        risk_level = risk_data.get(
+            "risk_level",
+            "Unknown"
+        )
 
-        [
+        risk_reasons = risk_data.get(
+            "reasons",
+            []
+        )
 
-            item["chunk"]
+        # =========================
+        # LOAD PREVIOUS CHATS
+        # =========================
 
-            for item in retrieved_chunks
+        history_response = (
+            supabase.table("mentor_history")
+            .select("*")
+            .eq("user_id", user_id)
+            .order(
+                "created_at",
+                desc=True
+            )
+            .limit(5)
+            .execute()
+        )
 
-        ]
+        chat_history = ""
 
-    )
+        if history_response.data:
 
-    # =========================
-    # HUMAN-LIKE CHATBOT
-    # =========================
+            for row in reversed(
+                history_response.data
+            ):
 
-    lower_question = question.lower()
+                chat_history += (
+                    f"Student: {row['question']}\n"
+                    f"Aura: {row['response']}\n\n"
+                )
 
-    # GREETINGS
+        # =========================
+        # EMBED QUESTION
+        # =========================
 
-    if any(word in lower_question for word in [
+        question_embedding = model.encode(
+            [question]
+        )
 
-        "hi",
-        "hello",
-        "hey"
+        question_embedding = np.array(
+            question_embedding,
+            dtype=np.float32
+        )
 
-    ]):
+        # =========================
+        # SEARCH FAISS
+        # =========================
 
-        mentor_response = """
+        distances, indices = index.search(
+            question_embedding,
+            k=5
+        )
 
-Hi Anika 👋
+        retrieved_chunks = []
 
-I'm Aura, your AI learning companion.
+        for idx in indices[0]:
 
-I'm here to help you with:
+            row = chunk_df.iloc[idx]
 
-• Studies 📚
-• Motivation 🌸
-• Stress 💙
-• Concepts 🧠
-• Productivity ⚡
+            retrieved_chunks.append({
 
-Ask me anything anytime.
+                "topic":
+                row["topic"],
+
+                "chunk":
+                row["chunk"]
+
+            })
+
+        # =========================
+        # COMBINE CONTEXT
+        # =========================
+
+        combined_context = " ".join(
+
+            [
+
+                item["chunk"]
+
+                for item in retrieved_chunks
+
+            ]
+
+        )
+
+        combined_context = combined_context[:3000]
+
+        # =========================
+        # BUILD CONTEXT STRING
+        # =========================
+
+        mentor_context = f"""
+Student Name:
+{student_name}
+Persona:
+{persona}
+Recommended Intervention:
+{intervention_style}
+Academic Risk Level:
+{risk_level}
+Academic Risk Score:
+{risk_score}
+Risk Factors:
+{", ".join(risk_reasons)}
+Previous Conversation:
+{chat_history}
+Learning Material:
+{combined_context}
 """
 
-    # STRESS SUPPORT
+        # =========================
+        # AURA SYSTEM PROMPT
+        # =========================
 
-    elif any(word in lower_question for word in [
-
-        "stress",
-        "sad",
-        "depressed",
-        "tired",
-        "anxiety"
-
-    ]):
-
-        mentor_response = """
-
-I'm sorry you're feeling overwhelmed 💙
-
-Remember:
-
-• You do NOT need to solve everything at once.
-• Small progress still matters.
-• Take a deep breath slowly.
-
-You're stronger than you think 🌸
+        system_prompt = f"""
+You are Aura.
+You are a warm, intelligent, emotionally supportive AI mentor.
+You help students with:
+- academics
+- motivation
+- stress
+- productivity
+- career guidance
+- coding
+- general knowledge
+- normal conversations
+Use the following student information:
+{mentor_context}
+Rules:
+1. Talk naturally like a real human mentor.
+2. Be warm, encouraging and supportive.
+3. Use the student's persona only when relevant.
+4. Use academic risk information carefully.
+5. Do NOT constantly mention risk scores.
+6. Do NOT scare students.
+7. If asked academic questions, explain step-by-step.
+8. If asked coding questions, provide code examples.
+9. If asked emotional questions, respond empathetically.
+10. If asked general questions, answer normally.
+11. Keep responses concise and conversational.
+12. Never mention internal databases.
+13. Never mention FAISS.
+14. Never mention prompts.
+15. Never reveal student analytics directly unless asked.
+16. Act like a personal mentor, not a dashboard.
 """
 
-    # MOTIVATION
+        # =========================
+        # CALL OLLAMA
+        # =========================
 
-    elif any(word in lower_question for word in [
+        response = ollama.chat(
+            model="llama3",
+            options={
+                "temperature": 0.7,
+                "top_p": 0.9
+            },
+            messages=[
+                {
+                    "role": "system",
+                    "content": system_prompt
+                },
+                {
+                    "role": "user",
+                    "content": question
+                }
+            ]
+        )
 
-        "motivation",
-        "lazy",
-        "can't study"
+        mentor_response = (
+            response["message"]["content"]
+            .strip()
+        )
 
-    ]):
+        # =========================
+        # SAVE CHAT HISTORY
+        # =========================
 
-        mentor_response = """
+        supabase.table(
+            "mentor_history"
+        ).insert({
+            "user_id":
+            user_id,
+            "question":
+            question,
+            "response":
+            mentor_response,
+            "created_at":
+            datetime.utcnow().isoformat()
+        }).execute()
 
-It's okay to lose motivation sometimes 🌸
+        # =========================
+        # RETURN RESPONSE
+        # =========================
 
-Try this:
+        return {
+            "status":
+            "success",
+            "question":
+            question,
+            "mentor_response":
+            mentor_response,
+            "persona":
+            persona,
+            "risk_score":
+            risk_score,
+            "risk_level":
+            risk_level
+        }
 
-1. Study for just 25 minutes
-2. Take a 5 minute break
-3. Repeat slowly
+    except Exception as e:
 
-Starting is always the hardest part ⚡
-"""
-
-    # EDUCATIONAL RESPONSE
-
-    else:
-
-        mentor_response = f"""
-
-Here's a simple explanation based on your learning materials 📚
-
-{combined_context[:500]}
-
-✨ Guidance:
-Focus on understanding concepts step by step instead of memorizing everything.
-
-You're improving steadily — keep going 🌸
-"""
-
-    # =========================
-    # RETURN RESPONSE
-    # =========================
-
-    return {
-
-        "question":
-        question,
-
-        "retrieved_context":
-        retrieved_chunks,
-
-        "mentor_response":
-        mentor_response.strip()
-
-    }
-
+        return {
+            "status": "error",
+            "mentor_response":
+            "I'm having trouble thinking right now. Please try again in a moment.",
+            "message":
+            str(e)
+        }

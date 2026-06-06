@@ -15,23 +15,26 @@ router = APIRouter()
 # =========================
 
 @router.post("/ask")
-
 def mentor_chat(
     request: MentorQuestion
 ):
 
     response = ask_mentor(
+
+        request.user_id,
+
         request.question
+
     )
 
     return response
+
 
 # =========================
 # MENTOR STATUS
 # =========================
 
 @router.get("/")
-
 def mentor_status():
 
     return {
@@ -46,6 +49,16 @@ def mentor_status():
             "Transcript Embeddings",
 
             "Semantic Search",
+
+            "Persona Intelligence",
+
+            "Academic Risk Awareness",
+
+            "Cognitive Intelligence",
+
+            "Chat History Memory",
+
+            "Ollama Llama3 Integration",
 
             "Personalized Guidance"
 

@@ -20,9 +20,12 @@ MODEL_PATH = os.path.join(
 print("MODEL PATH:")
 print(MODEL_PATH)
 
-model = joblib.load(MODEL_PATH)
-
-print("XGBoost Model Loaded Successfully")
+if os.path.exists(MODEL_PATH):
+    model = joblib.load(MODEL_PATH)
+    print("XGBoost Model Loaded Successfully")
+else:
+    model = None
+    print("Risk Model Not Found")
 
 # =========================
 # GET STUDENT RISK SERVICE
@@ -140,6 +143,13 @@ def get_student_risk_service(user_id: str):
         # XGBOOST PREDICTION
         # =========================
 
+        if model is None:
+            return {
+                "status": "error",
+                "message":
+                "Risk model not loaded"
+            }
+
         prediction_probability = float(
             model.predict_proba(
                 features
@@ -218,11 +228,11 @@ def get_student_risk_service(user_id: str):
         # PERSONA DETECTION
         # =========================
 
-        if risk_score > 80:
+        if risk_score >= 80:
 
             persona = "Burnout Pattern"
 
-        elif inactivity_days > 20:
+        elif inactivity_days >= 20:
 
             persona = "Passive Watcher"
 
@@ -230,9 +240,13 @@ def get_student_risk_service(user_id: str):
 
             persona = "Anxiety-Spike Learner"
 
+        elif avg_score < 50:
+
+            persona = "Struggling Learner"
+
         else:
 
-            persona = "Last-Minute Survivor"
+            persona = "Consistent Learner"
 
         # =========================
         # RESPONSE

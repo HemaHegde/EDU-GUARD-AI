@@ -1,12 +1,7 @@
-
 from fastapi import APIRouter
 
 from services.persona_service import (
-
-    get_persona_students,
-    get_student_persona,
-    persona_dashboard
-
+    get_student_persona
 )
 
 router = APIRouter()
@@ -27,36 +22,15 @@ def persona_home():
     }
 
 # =========================
-# GET ALL STUDENTS
+# GET CURRENT USER PERSONA
 # =========================
 
-@router.get("/students")
+@router.get("/me/{user_id}")
 
-def persona_students():
-
-    return get_persona_students()
-
-# =========================
-# GET SINGLE STUDENT
-# =========================
-
-@router.get("/student/{student_id}")
-
-def student_persona(
-    student_id: int
+def get_my_persona(
+    user_id: str
 ):
 
     return get_student_persona(
-        student_id
+        user_id
     )
-
-# =========================
-# DASHBOARD
-# =========================
-
-@router.get("/dashboard/overview")
-
-def dashboard():
-
-    return persona_dashboard()
-

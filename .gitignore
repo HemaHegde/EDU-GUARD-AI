@@ -1,0 +1,32 @@
+# Python
+venv/
+__pycache__/
+*.pyc
+
+# Datasets
+datasets/
+ednetkt1/
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Node
+node_modules/
+
+# Build
+dist/
+build/
+
+backend/eduguard.db
+backend/services/cookies.txt
+
+ml/video_pipeline/downloads/
+
+*.vtt
+
+frontend/**/node_modules/
+frontend/**/.env
