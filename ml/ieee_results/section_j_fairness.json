@@ -1,0 +1,302 @@
+[
+  {
+    "demographic": "gender",
+    "group": "F",
+    "n_samples": 3280,
+    "accuracy": 0.8909,
+    "precision": 0.9509,
+    "recall": 0.8391,
+    "f1_score": 0.8915,
+    "roc_auc": 0.9497
+  },
+  {
+    "demographic": "gender",
+    "group": "M",
+    "n_samples": 3239,
+    "accuracy": 0.8873,
+    "precision": 0.9437,
+    "recall": 0.8336,
+    "f1_score": 0.8853,
+    "roc_auc": 0.9475
+  },
+  {
+    "demographic": "region",
+    "group": "East Midlands",
+    "n_samples": 1335,
+    "accuracy": 0.8824,
+    "precision": 0.943,
+    "recall": 0.826,
+    "f1_score": 0.8806,
+    "roc_auc": 0.9431
+  },
+  {
+    "demographic": "region",
+    "group": "London",
+    "n_samples": 1290,
+    "accuracy": 0.9,
+    "precision": 0.9531,
+    "recall": 0.8549,
+    "f1_score": 0.9013,
+    "roc_auc": 0.9465
+  },
+  {
+    "demographic": "region",
+    "group": "North West",
+    "n_samples": 939,
+    "accuracy": 0.8797,
+    "precision": 0.9446,
+    "recall": 0.8133,
+    "f1_score": 0.874,
+    "roc_auc": 0.9407
+  },
+  {
+    "demographic": "region",
+    "group": "Scotland",
+    "n_samples": 860,
+    "accuracy": 0.8965,
+    "precision": 0.9617,
+    "recall": 0.8463,
+    "f1_score": 0.9003,
+    "roc_auc": 0.9618
+  },
+  {
+    "demographic": "region",
+    "group": "South East",
+    "n_samples": 1326,
+    "accuracy": 0.8944,
+    "precision": 0.946,
+    "recall": 0.8438,
+    "f1_score": 0.892,
+    "roc_auc": 0.954
+  },
+  {
+    "demographic": "region",
+    "group": "Wales",
+    "n_samples": 769,
+    "accuracy": 0.8765,
+    "precision": 0.9339,
+    "recall": 0.8268,
+    "f1_score": 0.8771,
+    "roc_auc": 0.9478
+  },
+  {
+    "demographic": "disability",
+    "group": "N",
+    "n_samples": 5881,
+    "accuracy": 0.8891,
+    "precision": 0.9464,
+    "recall": 0.8371,
+    "f1_score": 0.8884,
+    "roc_auc": 0.9484
+  },
+  {
+    "demographic": "disability",
+    "group": "Y",
+    "n_samples": 638,
+    "accuracy": 0.8887,
+    "precision": 0.9561,
+    "recall": 0.8299,
+    "f1_score": 0.8885,
+    "roc_auc": 0.951
+  },
+  {
+    "demographic": "imd_band",
+    "group": "0-10%",
+    "n_samples": 653,
+    "accuracy": 0.9158,
+    "precision": 0.98,
+    "recall": 0.8571,
+    "f1_score": 0.9145,
+    "roc_auc": 0.9606
+  },
+  {
+    "demographic": "imd_band",
+    "group": "10-20%",
+    "n_samples": 642,
+    "accuracy": 0.8941,
+    "precision": 0.9647,
+    "recall": 0.8248,
+    "f1_score": 0.8893,
+    "roc_auc": 0.9403
+  },
+  {
+    "demographic": "imd_band",
+    "group": "20-30%",
+    "n_samples": 644,
+    "accuracy": 0.9037,
+    "precision": 0.9515,
+    "recall": 0.8622,
+    "f1_score": 0.9046,
+    "roc_auc": 0.9595
+  },
+  {
+    "demographic": "imd_band",
+    "group": "30-40%",
+    "n_samples": 690,
+    "accuracy": 0.8942,
+    "precision": 0.9503,
+    "recall": 0.843,
+    "f1_score": 0.8934,
+    "roc_auc": 0.9578
+  },
+  {
+    "demographic": "imd_band",
+    "group": "40-50%",
+    "n_samples": 661,
+    "accuracy": 0.8805,
+    "precision": 0.9414,
+    "recall": 0.8257,
+    "f1_score": 0.8798,
+    "roc_auc": 0.9443
+  },
+  {
+    "demographic": "imd_band",
+    "group": "50-60%",
+    "n_samples": 630,
+    "accuracy": 0.8714,
+    "precision": 0.9386,
+    "recall": 0.8136,
+    "f1_score": 0.8716,
+    "roc_auc": 0.9337
+  },
+  {
+    "demographic": "imd_band",
+    "group": "60-70%",
+    "n_samples": 671,
+    "accuracy": 0.8808,
+    "precision": 0.9331,
+    "recall": 0.8411,
+    "f1_score": 0.8847,
+    "roc_auc": 0.9509
+  },
+  {
+    "demographic": "imd_band",
+    "group": "70-80%",
+    "n_samples": 611,
+    "accuracy": 0.8723,
+    "precision": 0.9399,
+    "recall": 0.8135,
+    "f1_score": 0.8721,
+    "roc_auc": 0.9433
+  },
+  {
+    "demographic": "imd_band",
+    "group": "80-90%",
+    "n_samples": 655,
+    "accuracy": 0.8977,
+    "precision": 0.9515,
+    "recall": 0.8497,
+    "f1_score": 0.8977,
+    "roc_auc": 0.951
+  },
+  {
+    "demographic": "imd_band",
+    "group": "90-100%",
+    "n_samples": 662,
+    "accuracy": 0.8792,
+    "precision": 0.9243,
+    "recall": 0.8314,
+    "f1_score": 0.8754,
+    "roc_auc": 0.941
+  },
+  {
+    "demographic": "age_band",
+    "group": "0-35",
+    "n_samples": 4582,
+    "accuracy": 0.8913,
+    "precision": 0.9484,
+    "recall": 0.839,
+    "f1_score": 0.8904,
+    "roc_auc": 0.9492
+  },
+  {
+    "demographic": "age_band",
+    "group": "35-55",
+    "n_samples": 1617,
+    "accuracy": 0.8844,
+    "precision": 0.9488,
+    "recall": 0.8299,
+    "f1_score": 0.8853,
+    "roc_auc": 0.9471
+  },
+  {
+    "demographic": "age_band",
+    "group": "55<=",
+    "n_samples": 320,
+    "accuracy": 0.8812,
+    "precision": 0.9247,
+    "recall": 0.8333,
+    "f1_score": 0.8766,
+    "roc_auc": 0.9478
+  },
+  {
+    "demographic": "code_module",
+    "group": "AAA",
+    "n_samples": 905,
+    "accuracy": 0.895,
+    "precision": 0.9399,
+    "recall": 0.8612,
+    "f1_score": 0.8988,
+    "roc_auc": 0.9544
+  },
+  {
+    "demographic": "code_module",
+    "group": "BBB",
+    "n_samples": 965,
+    "accuracy": 0.9088,
+    "precision": 0.9552,
+    "recall": 0.8623,
+    "f1_score": 0.9064,
+    "roc_auc": 0.9583
+  },
+  {
+    "demographic": "code_module",
+    "group": "CCC",
+    "n_samples": 907,
+    "accuracy": 0.8644,
+    "precision": 0.9306,
+    "recall": 0.8054,
+    "f1_score": 0.8635,
+    "roc_auc": 0.9402
+  },
+  {
+    "demographic": "code_module",
+    "group": "DDD",
+    "n_samples": 941,
+    "accuracy": 0.8852,
+    "precision": 0.9487,
+    "recall": 0.8256,
+    "f1_score": 0.8829,
+    "roc_auc": 0.9484
+  },
+  {
+    "demographic": "code_module",
+    "group": "EEE",
+    "n_samples": 921,
+    "accuracy": 0.9012,
+    "precision": 0.9562,
+    "recall": 0.8522,
+    "f1_score": 0.9012,
+    "roc_auc": 0.9454
+  },
+  {
+    "demographic": "code_module",
+    "group": "FFF",
+    "n_samples": 966,
+    "accuracy": 0.8758,
+    "precision": 0.9509,
+    "recall": 0.8043,
+    "f1_score": 0.8715,
+    "roc_auc": 0.9371
+  },
+  {
+    "demographic": "code_module",
+    "group": "GGG",
+    "n_samples": 914,
+    "accuracy": 0.8928,
+    "precision": 0.9494,
+    "recall": 0.8446,
+    "f1_score": 0.8939,
+    "roc_auc": 0.9554
+  }
+]

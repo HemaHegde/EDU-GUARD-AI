@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as VideoRouteImport } from './routes/video'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as RiskRouteImport } from './routes/risk'
+import { Route as ResearchRouteImport } from './routes/research'
 import { Route as PersonaRouteImport } from './routes/persona'
 import { Route as MentorRouteImport } from './routes/mentor'
 import { Route as LoginRouteImport } from './routes/login'
@@ -32,6 +33,11 @@ const SignupRoute = SignupRouteImport.update({
 const RiskRoute = RiskRouteImport.update({
   id: '/risk',
   path: '/risk',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResearchRoute = ResearchRouteImport.update({
+  id: '/research',
+  path: '/research',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PersonaRoute = PersonaRouteImport.update({
@@ -72,6 +78,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/mentor': typeof MentorRoute
   '/persona': typeof PersonaRoute
+  '/research': typeof ResearchRoute
   '/risk': typeof RiskRoute
   '/signup': typeof SignupRoute
   '/video': typeof VideoRoute
@@ -83,6 +90,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/mentor': typeof MentorRoute
   '/persona': typeof PersonaRoute
+  '/research': typeof ResearchRoute
   '/risk': typeof RiskRoute
   '/signup': typeof SignupRoute
   '/video': typeof VideoRoute
@@ -95,6 +103,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/mentor': typeof MentorRoute
   '/persona': typeof PersonaRoute
+  '/research': typeof ResearchRoute
   '/risk': typeof RiskRoute
   '/signup': typeof SignupRoute
   '/video': typeof VideoRoute
@@ -108,6 +117,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/mentor'
     | '/persona'
+    | '/research'
     | '/risk'
     | '/signup'
     | '/video'
@@ -119,6 +129,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/mentor'
     | '/persona'
+    | '/research'
     | '/risk'
     | '/signup'
     | '/video'
@@ -130,6 +141,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/mentor'
     | '/persona'
+    | '/research'
     | '/risk'
     | '/signup'
     | '/video'
@@ -142,6 +154,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   MentorRoute: typeof MentorRoute
   PersonaRoute: typeof PersonaRoute
+  ResearchRoute: typeof ResearchRoute
   RiskRoute: typeof RiskRoute
   SignupRoute: typeof SignupRoute
   VideoRoute: typeof VideoRoute
@@ -168,6 +181,13 @@ declare module '@tanstack/react-router' {
       path: '/risk'
       fullPath: '/risk'
       preLoaderRoute: typeof RiskRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/research': {
+      id: '/research'
+      path: '/research'
+      fullPath: '/research'
+      preLoaderRoute: typeof ResearchRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/persona': {
@@ -222,6 +242,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   MentorRoute: MentorRoute,
   PersonaRoute: PersonaRoute,
+  ResearchRoute: ResearchRoute,
   RiskRoute: RiskRoute,
   SignupRoute: SignupRoute,
   VideoRoute: VideoRoute,

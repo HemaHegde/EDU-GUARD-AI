@@ -19,9 +19,19 @@ MODEL_PATH = os.path.join(
     "../../ml/video_intelligence/gru_cognitive_model.h5"
 )
 
-model = load_model(
-    MODEL_PATH
-)
+model = None
+
+try:
+    model = load_model(
+        MODEL_PATH,
+        compile=False
+    )
+    print("GRU Cognitive Model Loaded Successfully")
+except Exception as model_load_error:
+    print(
+        f"WARNING: GRU model could not be loaded ({model_load_error}). "
+        "Falling back to heuristic scoring."
+    )
 
 # =========================
 # TRACK LIVE COGNITIVE DATA
@@ -146,18 +156,27 @@ def track_cognitive_behavior(
         # MODEL PREDICTION
         # =========================
 
-        prediction = model.predict(
-            features,
-            verbose=0
-        )
+        if model is not None:
+            prediction = model.predict(
+                features,
+                verbose=0
+            )
+            prediction_value = float(
+                prediction[0][0]
+            )
+        else:
+            # Heuristic fallback when model unavailable
+            prediction_value = float(
+                np.clip(
+                    (pause_count * 0.05 + seek_count * 0.03) / 10,
+                    0.0,
+                    1.0
+                )
+            )
 
         # =========================
         # SAFE PREDICTION VALUE
         # =========================
-
-        prediction_value = float(
-            prediction[0][0]
-        )
 
         # =========================
         # AI SCORES

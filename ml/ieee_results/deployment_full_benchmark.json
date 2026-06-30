@@ -1,0 +1,56 @@
+{
+  "model": "XGBoost",
+  "model_size_kb": 1003.9,
+  "benchmark": [
+    {
+      "batch_size": 1,
+      "latency_mean_ms": 0.471,
+      "latency_std_ms": 0.2996,
+      "per_request_ms": 0.471049,
+      "throughput_req_s": 2122.9,
+      "memory_usage_mb": 181.2,
+      "memory_delta_mb": 2.1,
+      "cpu_pct": 14.2
+    },
+    {
+      "batch_size": 10,
+      "latency_mean_ms": 0.5638,
+      "latency_std_ms": 0.0802,
+      "per_request_ms": 0.05638,
+      "throughput_req_s": 17736.9,
+      "memory_usage_mb": 181.2,
+      "memory_delta_mb": 2.1,
+      "cpu_pct": 89.5
+    },
+    {
+      "batch_size": 100,
+      "latency_mean_ms": 1.0681,
+      "latency_std_ms": 0.1465,
+      "per_request_ms": 0.010681,
+      "throughput_req_s": 93622.4,
+      "memory_usage_mb": 181.2,
+      "memory_delta_mb": 2.1,
+      "cpu_pct": 0.0
+    },
+    {
+      "batch_size": 1000,
+      "latency_mean_ms": 1.5897,
+      "latency_std_ms": 0.0298,
+      "per_request_ms": 0.00159,
+      "throughput_req_s": 629041.6,
+      "memory_usage_mb": 181.2,
+      "memory_delta_mb": 2.1,
+      "cpu_pct": 100.0
+    },
+    {
+      "batch_size": 10000,
+      "latency_mean_ms": 9.4558,
+      "latency_std_ms": 0.4226,
+      "per_request_ms": 0.000946,
+      "throughput_req_s": 1057549.7,
+      "memory_usage_mb": 181.2,
+      "memory_delta_mb": 2.1,
+      "cpu_pct": 86.9
+    }
+  ]
+}

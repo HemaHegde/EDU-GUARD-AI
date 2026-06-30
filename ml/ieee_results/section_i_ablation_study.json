@@ -1,0 +1,97 @@
+[
+  {
+    "config": "A \u2014 Behavioral Only",
+    "n_features": 7,
+    "accuracy": 0.8891,
+    "precision": 0.9474,
+    "recall": 0.8364,
+    "f1_score": 0.8884,
+    "roc_auc": 0.9486,
+    "cm": [
+      [
+        2917,
+        160
+      ],
+      [
+        563,
+        2879
+      ]
+    ]
+  },
+  {
+    "config": "B \u2014 Behavioral + SHAP Top-4",
+    "n_features": 4,
+    "accuracy": 0.8833,
+    "precision": 0.9449,
+    "recall": 0.8271,
+    "f1_score": 0.8821,
+    "roc_auc": 0.945,
+    "cm": [
+      [
+        2911,
+        166
+      ],
+      [
+        595,
+        2847
+      ]
+    ]
+  },
+  {
+    "config": "C \u2014 Behavioral + Personas",
+    "n_features": 13,
+    "accuracy": 0.8882,
+    "precision": 0.9478,
+    "recall": 0.8341,
+    "f1_score": 0.8873,
+    "roc_auc": 0.949,
+    "cm": [
+      [
+        2919,
+        158
+      ],
+      [
+        571,
+        2871
+      ]
+    ]
+  },
+  {
+    "config": "D \u2014 Behavioral + Cognitive",
+    "n_features": 11,
+    "accuracy": 0.8883,
+    "precision": 0.9452,
+    "recall": 0.837,
+    "f1_score": 0.8878,
+    "roc_auc": 0.9492,
+    "cm": [
+      [
+        2910,
+        167
+      ],
+      [
+        561,
+        2881
+      ]
+    ]
+  },
+  {
+    "config": "E \u2014 Full EduGuard AI",
+    "n_features": 17,
+    "accuracy": 0.8876,
+    "precision": 0.9463,
+    "recall": 0.8344,
+    "f1_score": 0.8868,
+    "roc_auc": 0.9489,
+    "cm": [
+      [
+        2914,
+        163
+      ],
+      [
+        570,
+        2872
+      ]
+    ]
+  }
+]

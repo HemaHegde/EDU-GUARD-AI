@@ -1,0 +1,26 @@
+[
+  {
+    "comparison": "XGBoost vs Logistic Regression",
+    "auc_xgboost": 0.9486,
+    "auc_baseline": 0.9372,
+    "auc_difference": 0.0114,
+    "delong_z": 2.857,
+    "delong_p": 0.004277,
+    "mcnemar_chi2": 21.9639,
+    "mcnemar_p": 3e-06,
+    "significant_0.05": true,
+    "significance_label": "**"
+  },
+  {
+    "comparison": "XGBoost vs Random Forest",
+    "auc_xgboost": 0.9486,
+    "auc_baseline": 0.9468,
+    "auc_difference": 0.0019,
+    "delong_z": 0.4902,
+    "delong_p": 0.623984,
+    "mcnemar_chi2": 2.2655,
+    "mcnemar_p": 0.132285,
+    "significant_0.05": false,
+    "significance_label": "ns"
+  }
+]

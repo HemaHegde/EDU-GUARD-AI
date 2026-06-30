@@ -34,3 +34,18 @@ def get_my_persona(
     return get_student_persona(
         user_id
     )
+
+# =========================
+# EXPLAIN PERSONA / RISK
+# =========================
+
+@router.get("/explain/{user_id}")
+
+def explain_my_persona(
+    user_id: str
+):
+    from services.explainability_service import get_student_explanation
+
+    return get_student_explanation(
+        user_id
+    )

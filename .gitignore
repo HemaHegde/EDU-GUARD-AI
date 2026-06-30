@@ -30,3 +30,6 @@ ml/video_pipeline/downloads/
 
 frontend/**/node_modules/
 frontend/**/.env
+*.csv
+
+studentVle.csv

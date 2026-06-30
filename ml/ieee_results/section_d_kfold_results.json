@@ -1,0 +1,80 @@
+[
+  {
+    "model": "Logistic Regression",
+    "accuracy_mean": 0.8758,
+    "accuracy_std": 0.0031,
+    "precision_mean": 0.9318,
+    "precision_std": 0.0038,
+    "recall_mean": 0.8251,
+    "recall_std": 0.0048,
+    "f1_mean": 0.8752,
+    "f1_std": 0.0033,
+    "roc_auc_mean": 0.9356,
+    "roc_auc_std": 0.0021
+  },
+  {
+    "model": "Random Forest",
+    "accuracy_mean": 0.8834,
+    "accuracy_std": 0.0023,
+    "precision_mean": 0.9449,
+    "precision_std": 0.0026,
+    "recall_mean": 0.8275,
+    "recall_std": 0.0047,
+    "f1_mean": 0.8823,
+    "f1_std": 0.0026,
+    "roc_auc_mean": 0.9455,
+    "roc_auc_std": 0.0026
+  },
+  {
+    "model": "XGBoost (Proposed)",
+    "accuracy_mean": 0.8857,
+    "accuracy_std": 0.003,
+    "precision_mean": 0.9414,
+    "precision_std": 0.0043,
+    "recall_mean": 0.8355,
+    "recall_std": 0.0049,
+    "f1_mean": 0.8853,
+    "f1_std": 0.0031,
+    "roc_auc_mean": 0.9474,
+    "roc_auc_std": 0.0028
+  },
+  {
+    "model": "LightGBM",
+    "accuracy_mean": 0.8837,
+    "accuracy_std": 0.003,
+    "precision_mean": 0.9365,
+    "precision_std": 0.0047,
+    "recall_mean": 0.8364,
+    "recall_std": 0.0038,
+    "f1_mean": 0.8836,
+    "f1_std": 0.003,
+    "roc_auc_mean": 0.9468,
+    "roc_auc_std": 0.0025
+  },
+  {
+    "model": "CatBoost",
+    "accuracy_mean": 0.8855,
+    "accuracy_std": 0.003,
+    "precision_mean": 0.9416,
+    "precision_std": 0.004,
+    "recall_mean": 0.835,
+    "recall_std": 0.0049,
+    "f1_mean": 0.8851,
+    "f1_std": 0.0032,
+    "roc_auc_mean": 0.948,
+    "roc_auc_std": 0.0025
+  },
+  {
+    "model": "SVM (RBF, 10k sample)",
+    "accuracy_mean": 0.8804,
+    "accuracy_std": 0.0104,
+    "precision_mean": 0.9548,
+    "precision_std": 0.0084,
+    "recall_mean": 0.8119,
+    "recall_std": 0.0159,
+    "f1_mean": 0.8775,
+    "f1_std": 0.0114,
+    "roc_auc_mean": 0.9425,
+    "roc_auc_std": 0.0068
+  }
+]

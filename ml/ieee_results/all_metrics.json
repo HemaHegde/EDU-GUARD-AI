@@ -1,0 +1,341 @@
+{
+  "dataset": {
+    "total_records": 32593,
+    "label_0_count": 15385,
+    "label_1_count": 17208,
+    "train_size": 26074,
+    "test_size": 6519,
+    "features": [
+      "total_clicks",
+      "avg_score",
+      "active_days",
+      "engagement_variability",
+      "inactivity_days",
+      "engagement_slope",
+      "assessment_consistency"
+    ]
+  },
+  "logistic_regression": {
+    "accuracy": 0.877,
+    "precision": 0.9348,
+    "recall": 0.8245,
+    "f1_score": 0.8762,
+    "roc_auc": 0.9372,
+    "confusion_matrix": [
+      [
+        2879,
+        198
+      ],
+      [
+        604,
+        2838
+      ]
+    ],
+    "classification_report": {
+      "0": {
+        "precision": 0.8265862761986793,
+        "recall": 0.9356516087097823,
+        "f1-score": 0.8777439024390243,
+        "support": 3077.0
+      },
+      "1": {
+        "precision": 0.9347826086956522,
+        "recall": 0.8245206275421266,
+        "f1-score": 0.8761963569002779,
+        "support": 3442.0
+      },
+      "accuracy": 0.876974996165056,
+      "macro avg": {
+        "precision": 0.8806844424471658,
+        "recall": 0.8800861181259545,
+        "f1-score": 0.876970129669651,
+        "support": 6519.0
+      },
+      "weighted avg": {
+        "precision": 0.8837134086506782,
+        "recall": 0.876974996165056,
+        "f1-score": 0.8769268059910469,
+        "support": 6519.0
+      }
+    }
+  },
+  "random_forest": {
+    "accuracy": 0.8865,
+    "precision": 0.9506,
+    "recall": 0.828,
+    "f1_score": 0.8851,
+    "roc_auc": 0.9468,
+    "confusion_matrix": [
+      [
+        2929,
+        148
+      ],
+      [
+        592,
+        2850
+      ]
+    ],
+    "classification_report": {
+      "0": {
+        "precision": 0.8318659471740982,
+        "recall": 0.9519012024699383,
+        "f1-score": 0.8878448014549863,
+        "support": 3077.0
+      },
+      "1": {
+        "precision": 0.9506337558372249,
+        "recall": 0.8280069726902963,
+        "f1-score": 0.8850931677018633,
+        "support": 3442.0
+      },
+      "accuracy": 0.8864856573094033,
+      "macro avg": {
+        "precision": 0.8912498515056615,
+        "recall": 0.8899540875801173,
+        "f1-score": 0.8864689845784248,
+        "support": 6519.0
+      },
+      "weighted avg": {
+        "precision": 0.8945747671493216,
+        "recall": 0.8864856573094033,
+        "f1-score": 0.88639195234036,
+        "support": 6519.0
+      }
+    }
+  },
+  "xgboost": {
+    "accuracy": 0.8891,
+    "precision": 0.9474,
+    "recall": 0.8364,
+    "f1_score": 0.8884,
+    "roc_auc": 0.9486,
+    "confusion_matrix": [
+      [
+        2917,
+        160
+      ],
+      [
+        563,
+        2879
+      ]
+    ],
+    "classification_report": {
+      "0": {
+        "precision": 0.8382183908045977,
+        "recall": 0.9480012999675008,
+        "f1-score": 0.8897361598291902,
+        "support": 3077.0
+      },
+      "1": {
+        "precision": 0.9473511023362948,
+        "recall": 0.836432306798373,
+        "f1-score": 0.8884431414905107,
+        "support": 3442.0
+      },
+      "accuracy": 0.8890934192360792,
+      "macro avg": {
+        "precision": 0.8927847465704463,
+        "recall": 0.892216803382937,
+        "f1-score": 0.8890896506598505,
+        "support": 6519.0
+      },
+      "weighted avg": {
+        "precision": 0.8958399267905007,
+        "recall": 0.8890934192360792,
+        "f1-score": 0.8890534524934433,
+        "support": 6519.0
+      }
+    }
+  },
+  "shap_importance": [
+    {
+      "feature": "inactivity_days",
+      "label": "Inactivity Duration (days)",
+      "mean_abs_shap": 1.3729056119918823
+    },
+    {
+      "feature": "active_days",
+      "label": "Active Learning Days",
+      "mean_abs_shap": 1.0668739080429077
+    },
+    {
+      "feature": "avg_score",
+      "label": "Mean Assessment Score",
+      "mean_abs_shap": 0.9491743445396423
+    },
+    {
+      "feature": "assessment_consistency",
+      "label": "Assessment Consistency (SD)",
+      "mean_abs_shap": 0.9063138365745544
+    },
+    {
+      "feature": "engagement_slope",
+      "label": "Engagement Trend (Slope)",
+      "mean_abs_shap": 0.288900762796402
+    },
+    {
+      "feature": "total_clicks",
+      "label": "Total Interaction Clicks",
+      "mean_abs_shap": 0.19941343367099762
+    },
+    {
+      "feature": "engagement_variability",
+      "label": "Engagement Variability",
+      "mean_abs_shap": 0.0677206814289093
+    }
+  ],
+  "pearson_correlations": [
+    {
+      "feature": "avg_score",
+      "label": "Mean Assessment Score",
+      "r": -0.5588,
+      "p_value": 0.0,
+      "p_label": "<0.001",
+      "significance": "***"
+    },
+    {
+      "feature": "active_days",
+      "label": "Active Learning Days",
+      "r": -0.5563,
+      "p_value": 0.0,
+      "p_label": "<0.001",
+      "significance": "***"
+    },
+    {
+      "feature": "inactivity_days",
+      "label": "Inactivity Duration (days)",
+      "r": -0.5452,
+      "p_value": 0.0,
+      "p_label": "<0.001",
+      "significance": "***"
+    },
+    {
+      "feature": "total_clicks",
+      "label": "Total Interaction Clicks",
+      "r": -0.4116,
+      "p_value": 0.0,
+      "p_label": "<0.001",
+      "significance": "***"
+    },
+    {
+      "feature": "assessment_consistency",
+      "label": "Assessment Consistency (SD)",
+      "r": -0.243,
+      "p_value": 0.0,
+      "p_label": "<0.001",
+      "significance": "***"
+    },
+    {
+      "feature": "engagement_variability",
+      "label": "Engagement Variability",
+      "r": -0.2088,
+      "p_value": 9.547483e-318,
+      "p_label": "<0.001",
+      "significance": "***"
+    },
+    {
+      "feature": "engagement_slope",
+      "label": "Engagement Trend (Slope)",
+      "r": -0.0135,
+      "p_value": 0.014521553483169521,
+      "p_label": "0.0145",
+      "significance": "*"
+    }
+  ],
+  "anova": {
+    "n_clusters": 4,
+    "n_total": 32593,
+    "clusters": [
+      "Anxiety-Spike Learner",
+      "Burnout Pattern",
+      "Last-Minute Survivor",
+      "Passive Watcher"
+    ],
+    "results": [
+      {
+        "feature": "total_clicks",
+        "label": "Total Interaction Clicks",
+        "f_statistic": 9441.44,
+        "p_value": 0.0,
+        "p_label": "<0.001",
+        "significance": "***",
+        "eta_squared": 0.465,
+        "effect_size": "Large"
+      },
+      {
+        "feature": "avg_score",
+        "label": "Mean Assessment Score",
+        "f_statistic": 60894.97,
+        "p_value": 0.0,
+        "p_label": "<0.001",
+        "significance": "***",
+        "eta_squared": 0.8486,
+        "effect_size": "Large"
+      },
+      {
+        "feature": "active_days",
+        "label": "Active Learning Days",
+        "f_statistic": 22043.17,
+        "p_value": 0.0,
+        "p_label": "<0.001",
+        "significance": "***",
+        "eta_squared": 0.6699,
+        "effect_size": "Large"
+      },
+      {
+        "feature": "engagement_variability",
+        "label": "Engagement Variability",
+        "f_statistic": 2345.68,
+        "p_value": 0.0,
+        "p_label": "<0.001",
+        "significance": "***",
+        "eta_squared": 0.1776,
+        "effect_size": "Large"
+      },
+      {
+        "feature": "inactivity_days",
+        "label": "Inactivity Duration (days)",
+        "f_statistic": 23922.62,
+        "p_value": 0.0,
+        "p_label": "<0.001",
+        "significance": "***",
+        "eta_squared": 0.6877,
+        "effect_size": "Large"
+      },
+      {
+        "feature": "engagement_slope",
+        "label": "Engagement Trend (Slope)",
+        "f_statistic": 20.87,
+        "p_value": 1.6843305268540706e-13,
+        "p_label": "<0.001",
+        "significance": "***",
+        "eta_squared": 0.0019,
+        "effect_size": "Small"
+      },
+      {
+        "feature": "assessment_consistency",
+        "label": "Assessment Consistency (SD)",
+        "f_statistic": 15162.03,
+        "p_value": 0.0,
+        "p_label": "<0.001",
+        "significance": "***",
+        "eta_squared": 0.5826,
+        "effect_size": "Large"
+      }
+    ]
+  },
+  "kmeans_validation": {
+    "n_clusters": 6,
+    "silhouette_score": 0.3269,
+    "davies_bouldin": 1.0517,
+    "inertia": 89219.56,
+    "cluster_sizes": [
+      10466,
+      4370,
+      8668,
+      2872,
+      7,
+      6210
+    ]
+  }
+}

@@ -1,0 +1,30 @@
+[
+  {
+    "noise_level_pct": 0,
+    "accuracy": 0.8891,
+    "f1_score": 0.8884,
+    "recall": 0.8364,
+    "roc_auc": 0.9486
+  },
+  {
+    "noise_level_pct": 5,
+    "accuracy": 0.8784,
+    "f1_score": 0.88,
+    "recall": 0.8449,
+    "roc_auc": 0.9434
+  },
+  {
+    "noise_level_pct": 10,
+    "accuracy": 0.8593,
+    "f1_score": 0.866,
+    "recall": 0.8605,
+    "roc_auc": 0.9358
+  },
+  {
+    "noise_level_pct": 20,
+    "accuracy": 0.8334,
+    "f1_score": 0.8482,
+    "recall": 0.8815,
+    "roc_auc": 0.9275
+  }
+]

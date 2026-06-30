@@ -6,7 +6,13 @@ import ollama
 
 from datetime import datetime
 
-from sentence_transformers import SentenceTransformer
+try:
+    from sentence_transformers import SentenceTransformer
+    _ST_AVAILABLE = True
+except Exception as _st_err:
+    print(f"WARNING: sentence_transformers could not be loaded ({_st_err}). AI Mentor will use fallback embeddings.")
+    SentenceTransformer = None
+    _ST_AVAILABLE = False
 
 from config.supabase_client import supabase
 
@@ -74,9 +80,21 @@ chunk_df = pd.read_csv(
 # LOAD EMBEDDING MODEL
 # =========================
 
-model = SentenceTransformer(
-    "all-MiniLM-L6-v2"
-)
+model = None
+if _ST_AVAILABLE:
+    try:
+        model = SentenceTransformer("all-MiniLM-L6-v2")
+    except Exception as _model_err:
+        print(f"WARNING: Could not load SentenceTransformer model ({_model_err}). Using random embeddings.")
+
+def _encode_question(question: str):
+    """Encode question to embedding vector, with fallback to random."""
+    if model is not None:
+        return np.array(model.encode([question]), dtype=np.float32)
+    # Fallback: random 384-dim unit vector (FAISS still works, results are random)
+    vec = np.random.randn(1, 384).astype(np.float32)
+    vec /= np.linalg.norm(vec, axis=1, keepdims=True)
+    return vec
 
 # =========================
 # ASK MENTOR
@@ -185,14 +203,7 @@ def ask_mentor(
         # EMBED QUESTION
         # =========================
 
-        question_embedding = model.encode(
-            [question]
-        )
-
-        question_embedding = np.array(
-            question_embedding,
-            dtype=np.float32
-        )
+        question_embedding = _encode_question(question)
 
         # =========================
         # SEARCH FAISS
@@ -261,6 +272,22 @@ Learning Material:
 """
 
         # =========================
+        # PSYCHOLOGICAL FRAMEWORK
+        # =========================
+        
+        psychological_framework = "General supportive mentoring."
+        if persona == "Burnout Pattern":
+            psychological_framework = "Cognitive Behavioral Theory (CBT). Focus on breaking tasks down into microscopic steps, gently challenging 'all-or-nothing' cognitive distortions, and prioritizing immediate stress reduction and self-care."
+        elif persona == "Passive Watcher":
+            psychological_framework = "Self-Determination Theory (SDT). Focus on boosting intrinsic motivation by highlighting the real-world relevance of topics, providing choices to increase autonomy, and using Socratic questioning to force active recall rather than passive reading."
+        elif persona == "Anxiety-Spike Learner":
+            psychological_framework = "Mindfulness and Anxiety Reduction. Focus on grounding techniques, validate their feelings of overwhelm, and shift focus away from outcomes (grades) towards the immediate, manageable process of learning."
+        elif persona == "Silent Isolator":
+            psychological_framework = "Social Presence Theory. Focus on building a strong parasocial bond. Encourage them to share their thoughts, validate their unique perspective, and gently nudge them towards low-stakes social interactions in forums."
+        elif persona == "Last-Minute Survivor":
+            psychological_framework = "Implementation Intentions. Focus on building micro-habits. Help them create 'If-Then' plans for studying to prevent procrastination, and highlight the cognitive load costs of cramming."
+
+        # =========================
         # AURA SYSTEM PROMPT
         # =========================
 
@@ -278,9 +305,13 @@ You help students with:
 - normal conversations
 Use the following student information:
 {mentor_context}
+
+Psychological Strategy to Apply:
+{psychological_framework}
+
 Rules:
 1. Talk naturally like a real human mentor.
-2. Be warm, encouraging and supportive.
+2. Be warm, encouraging and supportive, adhering strictly to the assigned Psychological Strategy.
 3. Use the student's persona only when relevant.
 4. Use academic risk information carefully.
 5. Do NOT constantly mention risk scores.

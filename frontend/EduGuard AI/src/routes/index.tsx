@@ -12,8 +12,8 @@ import { PageShell, Skeleton, ErrorState } from "@/components/eg/PageShell";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Dashboard · EduGuard-AI" },
-      { name: "description", content: "Overview of learners, risk, engagement and personas — powered by your FastAPI backend." },
+      { title: "Psychological Engagement Monitor · EduGuard-AI" },
+      { name: "description", content: "Overview of learner engagement, disengagement risk, and psychological profiles — powered by the EduGuard-AI research backend." },
     ],
   }),
   component: DashboardPage,
@@ -39,8 +39,8 @@ function DashboardPage() {
 
   return (
     <PageShell
-      title="Learning Overview"
-      description="A calm, real-time view of every learner in your cohort — streamed directly from your EduGuard-AI backend."
+      title="Psychological Engagement Monitor"
+      description="Real-time overview of learner engagement metrics, disengagement risk indicators, and psychological profiles — streamed from the EduGuard-AI research backend."
     >
       <StatGrid loading={overview.loading} error={overview.error} data={overview.data} onRetry={overview.refetch} />
 
@@ -131,9 +131,9 @@ function StatGrid({
 }: { loading: boolean; error: string | null; data: Overview | null; onRetry: () => void }) {
   const stats = [
     { key: "total_students", label: "Total students", icon: Users, tint: "var(--pink)" },
-    { key: "high_risk_students", label: "High-risk students", icon: AlertTriangle, tint: "var(--peach)" },
-    { key: "average_engagement", label: "Avg. engagement", icon: Activity, tint: "var(--mint)", suffix: "%" },
-    { key: "average_attention", label: "Avg. attention", icon: Eye, tint: "var(--sky)", suffix: "%" },
+    { key: "high_risk_students", label: "Disengagement risk flagged", icon: AlertTriangle, tint: "var(--peach)" },
+    { key: "average_engagement", label: "Mean behavioral engagement", icon: Activity, tint: "var(--mint)", suffix: "%" },
+    { key: "average_attention", label: "Mean attentional score", icon: Eye, tint: "var(--sky)", suffix: "%" },
   ] as const;
 
   if (error) return <ErrorState message={error} onRetry={onRetry} />;

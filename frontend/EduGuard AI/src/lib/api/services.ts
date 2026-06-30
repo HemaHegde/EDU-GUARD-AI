@@ -64,3 +64,14 @@ export const videoService = {
   getGeneratedQuiz: (jobId: string) => api.get(`/video/${jobId}/quiz`).then((r) => r.data),
   getGeneratedFlashcards: (jobId: string) => api.get(`/video/${jobId}/flashcards`).then((r) => r.data),
 };
+
+// --- Research Analytics ---
+export const researchService = {
+  getOverview: () => api.get("/research/overview").then((r) => r.data),
+  getModelMetrics: () => api.get("/research/model-metrics").then((r) => r.data),
+  getCorrelations: () => api.get("/research/correlations").then((r) => r.data),
+  getShapImportance: () => api.get("/research/shap-importance").then((r) => r.data),
+  getPersonaProfiles: () => api.get("/research/persona-profiles").then((r) => r.data),
+
+  getClusterAnova: () => api.get("/research/cluster-anova").then((r) => r.data),
+};

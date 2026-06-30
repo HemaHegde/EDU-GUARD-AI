@@ -40,7 +40,7 @@ import { supabase } from "@/lib/supabase";
 
 export const Route = createFileRoute("/persona")({
   head: () => ({
-    meta: [{ title: "Persona Intelligence · EduGuard-AI" }],
+    meta: [{ title: "Learner Psychological Profile · EduGuard-AI" }],
   }),
   component: PersonaPage,
 });
@@ -331,20 +331,20 @@ function RadarSection({ persona }: { persona: PersonaData }) {
 // ── Learning DNA (KPI Cards with progress bars) ───────────────────────────────
 
 const kpiCards = [
-  { key: "attention_score", label: "Attention", Icon: Eye, grad: "from-sky-500 to-blue-600", barColor: "#0ea5e9" },
-  { key: "engagement_score", label: "Engagement", Icon: Zap, grad: "from-violet-500 to-purple-600", barColor: "#7c3aed" },
-  { key: "confusion_score", label: "Confusion", Icon: AlertTriangle, grad: "from-orange-500 to-amber-500", barColor: "#f59e0b" },
-  { key: "cognitive_overload_score", label: "Cognitive Overload", Icon: Brain, grad: "from-rose-500 to-pink-600", barColor: "#f43f5e" },
-  { key: "avg_score", label: "Average Score", Icon: TrendingUp, grad: "from-emerald-500 to-teal-500", barColor: "#10b981" },
-  { key: "total_clicks", label: "Total Clicks", Icon: MousePointer2, grad: "from-cyan-500 to-sky-500", barColor: "#06b6d4" },
+  { key: "attention_score", label: "Attentional Engagement", Icon: Eye, grad: "from-sky-500 to-blue-600", barColor: "#0ea5e9" },
+  { key: "engagement_score", label: "Behavioral Engagement", Icon: Zap, grad: "from-violet-500 to-purple-600", barColor: "#7c3aed" },
+  { key: "confusion_score", label: "Cognitive Load Indicator", Icon: AlertTriangle, grad: "from-orange-500 to-amber-500", barColor: "#f59e0b" },
+  { key: "cognitive_overload_score", label: "Cognitive Overload Index (CLT)", Icon: Brain, grad: "from-rose-500 to-pink-600", barColor: "#f43f5e" },
+  { key: "avg_score", label: "Mean Assessment Score", Icon: TrendingUp, grad: "from-emerald-500 to-teal-500", barColor: "#10b981" },
+  { key: "total_clicks", label: "Total Interaction Clicks", Icon: MousePointer2, grad: "from-cyan-500 to-sky-500", barColor: "#06b6d4" },
 ];
 
 function LearningDNA({ persona }: { persona: PersonaData }) {
   return (
     <motion.div variants={stagger} initial="hidden" animate="show">
       <motion.div variants={fadeUp} custom={0} className="mb-3">
-        <div className="text-xs font-semibold uppercase tracking-[0.15em] text-slate-500">Learning DNA</div>
-        <div className="text-lg font-bold text-slate-900">Metric Breakdown</div>
+        <div className="text-xs font-semibold uppercase tracking-[0.15em] text-slate-500">Psychological Profile</div>
+        <div className="text-lg font-bold text-slate-900">Engagement Metric Breakdown</div>
       </motion.div>
       <div className="grid grid-cols-2 gap-3">
         {kpiCards.map(({ key, label, Icon, grad, barColor }, i) => {
@@ -374,6 +374,62 @@ function LearningDNA({ persona }: { persona: PersonaData }) {
             </motion.div>
           );
         })}
+      </div>
+    </motion.div>
+  );
+}
+// ── Psychology Theory Context Panel ──────────────────────────────────────────
+
+const PERSONA_THEORY_DATA: Record<string, { theory: string; constructs: string[] }> = {
+  "Burnout Pattern": {
+    theory: "Cognitive Load Theory (CLT) + Emotional Exhaustion",
+    constructs: ["Burnout", "Cognitive Overload", "Emotional Exhaustion"],
+  },
+  "Passive Watcher": {
+    theory: "Self-Determination Theory (SDT) — Amotivation",
+    constructs: ["Amotivation", "Behavioural Disengagement", "Learned Helplessness"],
+  },
+  "Anxiety-Spike Learner": {
+    theory: "Attentional Control Theory (ACT) — Anxiety & Cognitive Interference",
+    constructs: ["Academic Anxiety", "Engagement Variability", "Self-Regulation Deficit"],
+  },
+  "Consistent Learner": {
+    theory: "Self-Determination Theory — Intrinsic Motivation",
+    constructs: ["Intrinsic Motivation", "Self-Regulation", "Academic Self-Efficacy"],
+  },
+  "Last-Minute Survivor": {
+    theory: "Temporal Motivation Theory (TMT) — Procrastination",
+    constructs: ["Procrastination", "Time Management Deficit", "Surface Learning"],
+  },
+  "Silent Isolator": {
+    theory: "Social Presence Theory — Social Disconnection",
+    constructs: ["Social Isolation", "Academic Withdrawal", "Low Social Presence"],
+  },
+};
+
+function PsychologyTheoryPanel({ persona }: { persona: string }) {
+  const theoryData = PERSONA_THEORY_DATA[persona] || {
+    theory: "Multidimensional Learning Construct",
+    constructs: ["Adaptive Learning", "Cognitive Flexibility"],
+  };
+
+  return (
+    <motion.div variants={fadeUp} custom={2.5} className="mt-4 rounded-2xl border border-violet-200 bg-violet-50/50 p-5 shadow-sm">
+      <div className="flex items-center gap-3 mb-3">
+        <div className="rounded-xl bg-violet-100 p-2 shadow-sm">
+          <BookOpen className="h-5 w-5 text-violet-600" />
+        </div>
+        <div>
+          <div className="text-xs font-semibold uppercase tracking-[0.15em] text-violet-600">Psychological Theory</div>
+          <div className="text-sm font-bold text-slate-900">{theoryData.theory}</div>
+        </div>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {theoryData.constructs.map((construct, i) => (
+          <span key={i} className="rounded-md bg-white border border-violet-100 px-2.5 py-1 text-xs font-semibold text-slate-700 shadow-sm">
+            {construct}
+          </span>
+        ))}
       </div>
     </motion.div>
   );
@@ -555,8 +611,8 @@ function PersonaPage() {
 
   return (
     <PageShell
-      title="Persona Intelligence"
-      description="AI-generated learning persona based on academic and cognitive behavior."
+      title="Learner Psychological Profile"
+      description="AI-generated psychological engagement profile based on academic and cognitive behavior analysis."
     >
       {loading ? (
         <Skeleton className="h-96" />
@@ -586,6 +642,9 @@ function PersonaPage() {
 
           {/* S3 — KPI DNA */}
           <LearningDNA persona={persona} />
+
+          {/* S3b — Psychology Theory Context */}
+          <PsychologyTheoryPanel persona={persona.persona} />
 
           {/* S4 — Insights */}
           <PersonaInsights persona={persona} />

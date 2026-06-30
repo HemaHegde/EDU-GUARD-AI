@@ -7,20 +7,18 @@ import {
   Brain,
   Users,
   Sparkles,
-  BookOpen,
-  Video,
   ChevronLeft,
+  FlaskConical,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const items = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard, color: "var(--pink)" },
+  { to: "/research", label: "Research Analytics", icon: FlaskConical, color: "var(--secondary)" },
   { to: "/risk", label: "Academic Risk", icon: AlertTriangle, color: "var(--peach)" },
+  { to: "/persona", label: "Psychological Profile", icon: Users, color: "var(--sky)" },
   { to: "/cognitive", label: "Cognitive Intelligence", icon: Brain, color: "var(--lavender)" },
-  { to: "/persona", label: "Persona Intelligence", icon: Users, color: "var(--sky)" },
   { to: "/mentor", label: "AI Mentor", icon: Sparkles, color: "var(--primary)" },
-  { to: "/learn", label: "Quiz + Flashcards", icon: BookOpen, color: "var(--mint)" },
-  { to: "/video", label: "Video Intelligence", icon: Video, color: "var(--secondary)" },
 ] as const;
 
 export function Sidebar() {
@@ -47,7 +45,7 @@ export function Sidebar() {
               <div className="text-[15px] font-semibold tracking-tight text-gradient">
                 EduGuard-AI
               </div>
-              <div className="text-[11px] text-muted-foreground">Learning companion</div>
+              <div className="text-[11px] text-muted-foreground">Psychology Research Platform</div>
             </motion.div>
           )}
         </Link>

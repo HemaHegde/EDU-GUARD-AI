@@ -22,12 +22,17 @@ from routes.mentor_routes import (
 )
 
 
-from routes.video_routes import (
-    router as video_router
+
+from routes.research_routes import (
+    router as research_router
 )
 
-from routes.pdf_learning_routes import (
-    router as pdf_learning_router
+from routes.seed_routes import (
+    router as seed_router
+)
+
+from routes.dashboard_routes import (
+    router as dashboard_router
 )
 
 # =========================
@@ -36,12 +41,15 @@ from routes.pdf_learning_routes import (
 
 app = FastAPI(
 
-    title="EduGuard-AI Backend",
+    title="EduGuard-AI — Psychology Research Backend",
 
     description="""
-    Multimodal Explainable Early-Warning
-    and AI Learning Support System
-    for Student Psychological Risk Detection
+    EduGuard-AI: A Multimodal Machine Learning Framework
+    for Detecting Psychological Engagement Patterns
+    and Early Disengagement Risk in Online Learning Environments.
+
+    Dataset: Open University Learning Analytics Dataset (OULAD)
+    Topic: Student Engagement in Online Learning and Its Psychological Factors
     """,
 
     version="2.0.0"
@@ -121,21 +129,31 @@ app.include_router(
 
 app.include_router(
 
-    video_router,
+    research_router,
 
-    prefix="/video",
+    prefix="/research",
 
-    tags=["Video Intelligence"]
+    tags=["Research Analytics"]
 
 )
 
 app.include_router(
 
-    pdf_learning_router,
+    seed_router,
 
-    prefix="/pdf-learning",
+    prefix="/demo",
 
-    tags=["PDF Learning"]
+    tags=["Demo Data Seeder"]
+
+)
+
+app.include_router(
+
+    dashboard_router,
+
+    prefix="/dashboard",
+
+    tags=["Dashboard"]
 
 )
 
@@ -167,11 +185,7 @@ def home():
 
             "AI Mentor",
 
-            "Quiz + Flashcard Generator",
-
-            "Video Transcript Intelligence",
-
-            "RAG Video Intelligence",
+            "Research Analytics",
 
             "Real-Time Analytics"
 

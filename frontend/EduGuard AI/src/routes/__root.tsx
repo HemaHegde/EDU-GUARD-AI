@@ -195,14 +195,14 @@ export const Route =
         },
 
         {
-          title: "EduGuard-AI",
+          title: "EduGuard-AI — Psychological Engagement Monitor",
         },
 
         {
           name: "description",
 
           content:
-            "AI-powered emotional and educational support for every learner.",
+            "A Multimodal Machine Learning Framework for Detecting Psychological Engagement Patterns and Early Disengagement Risk in Online Learning Environments.",
         },
 
       ],
