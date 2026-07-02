@@ -1,0 +1,11 @@
+{
+  "backend_sha256": "54fc95bd784a7f28dac390d58be78a35ec0730af4e79409f294ba4217ce5c2a9",
+  "backend_sha256_missing_modules": null,
+  "ollama_model": "qwen2.5:3b",
+  "live_llm_active": true,
+  "number_of_evaluated_users": 1,
+  "number_of_evaluated_questions": 5,
+  "number_of_ablation_configs": 6,
+  "total_evaluations": 30,
+  "timestamp_utc": "2026-07-02T07:17:19.347841+00:00"
+}

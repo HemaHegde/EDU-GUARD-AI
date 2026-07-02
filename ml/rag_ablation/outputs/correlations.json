@@ -1,0 +1,23 @@
+{
+  "recommendation_quality": {
+    "label": "Confidence vs Recommendation Quality",
+    "n": 30,
+    "coefficient": -0.0638,
+    "p_value": 0.7377,
+    "method": "Spearman"
+  },
+  "educational_usefulness": {
+    "label": "Confidence vs Educational Usefulness",
+    "n": 20,
+    "coefficient": -0.1931,
+    "p_value": 0.4147,
+    "method": "Spearman"
+  },
+  "grounding_overall": {
+    "label": "Confidence vs Grounding Recall",
+    "n": 25,
+    "coefficient": -0.1325,
+    "p_value": 0.5279,
+    "method": "Spearman"
+  }
+}

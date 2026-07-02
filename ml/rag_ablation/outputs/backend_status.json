@@ -1,0 +1,37 @@
+{
+  "mentor_service": {
+    "available": true,
+    "error": null,
+    "module_path": "services.mentor_service"
+  },
+  "context_builder": {
+    "available": true,
+    "error": null,
+    "module_path": "services.context_builder"
+  },
+  "prompt_builder": {
+    "available": true,
+    "error": null,
+    "module_path": "services.prompt_builder"
+  },
+  "retrieval": {
+    "available": true,
+    "error": null,
+    "module_path": "services.retrieval"
+  },
+  "confidence": {
+    "available": true,
+    "error": null,
+    "module_path": "services.confidence"
+  },
+  "reasoning_layer": {
+    "available": true,
+    "error": null,
+    "module_path": "services.reasoning_layer"
+  },
+  "supabase": {
+    "available": true,
+    "error": null,
+    "module_path": "config.supabase_client"
+  }
+}

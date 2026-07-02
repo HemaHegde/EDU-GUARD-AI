@@ -5,6 +5,42 @@ import numpy as np
 import os
 
 from tensorflow.keras.models import load_model
+from tensorflow.keras.layers import GRU
+
+# =========================
+# GRU COMPATIBILITY SHIM
+# =========================
+#
+# WHY THIS EXISTS:
+# The model was originally trained/saved on a TF/Keras
+# version where GRU's constructor accepted a 'time_major'
+# kwarg. That kwarg was removed in later TF/Keras releases.
+# The .h5 file's stored layer config still contains
+# 'time_major': False, so a plain load_model() call fails
+# with:
+#   Unrecognized keyword arguments passed to GRU: {'time_major': False}
+#
+# HOW IT WORKS:
+# Keras reconstructs each layer during loading by calling
+# LayerClass(**config). By registering CompatGRU under the
+# name "GRU" via custom_objects, this subclass intercepts
+# that call, strips the obsolete 'time_major' key, and
+# forwards everything else to the real GRU.__init__. The
+# resulting layer has the exact same shape/structure as the
+# original, so the saved weights load correctly afterward.
+# This does NOT change model behavior: time_major=False just
+# meant batch-first input ([batch, time, features]), which is
+# already what this service feeds the model, and which is the
+# only layout current Keras GRU supports anyway.
+#
+# This is a load-time compatibility fix only. No retraining,
+# no architecture changes, no weight changes.
+# =========================
+
+class CompatGRU(GRU):
+    def __init__(self, *args, **kwargs):
+        kwargs.pop("time_major", None)
+        super().__init__(*args, **kwargs)
 
 # =========================
 # LOAD TRAINED GRU MODEL
@@ -24,7 +60,8 @@ model = None
 try:
     model = load_model(
         MODEL_PATH,
-        compile=False
+        compile=False,
+        custom_objects={"GRU": CompatGRU}
     )
     print("GRU Cognitive Model Loaded Successfully")
 except Exception as model_load_error:

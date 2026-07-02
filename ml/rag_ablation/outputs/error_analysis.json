@@ -1,0 +1,93 @@
+{
+  "per_config": {
+    "Full System": {
+      "n_records": 5,
+      "n_failed": 0,
+      "failure_rate": 0.0,
+      "parser_fallback_frequency": "Not Evaluated",
+      "n_parse_mode_observed": 0,
+      "structured_response_compliance_rate": "Not Evaluated",
+      "average_response_length_chars": 283.2,
+      "n_response_length_observed": 5,
+      "confidence_distribution": {
+        "High": 5
+      }
+    },
+    "Without Retrieval": {
+      "n_records": 5,
+      "n_failed": 0,
+      "failure_rate": 0.0,
+      "parser_fallback_frequency": 0.0,
+      "n_parse_mode_observed": 5,
+      "structured_response_compliance_rate": 1.0,
+      "average_response_length_chars": 343.4,
+      "n_response_length_observed": 5,
+      "confidence_distribution": {
+        "High": 5
+      }
+    },
+    "Without Persona": {
+      "n_records": 5,
+      "n_failed": 0,
+      "failure_rate": 0.0,
+      "parser_fallback_frequency": 0.0,
+      "n_parse_mode_observed": 5,
+      "structured_response_compliance_rate": 1.0,
+      "average_response_length_chars": 338.2,
+      "n_response_length_observed": 5,
+      "confidence_distribution": {
+        "Low": 5
+      }
+    },
+    "Without SHAP": {
+      "n_records": 5,
+      "n_failed": 0,
+      "failure_rate": 0.0,
+      "parser_fallback_frequency": 0.0,
+      "n_parse_mode_observed": 5,
+      "structured_response_compliance_rate": 1.0,
+      "average_response_length_chars": 300.8,
+      "n_response_length_observed": 5,
+      "confidence_distribution": {
+        "Medium": 5
+      }
+    },
+    "Without Cognitive": {
+      "n_records": 5,
+      "n_failed": 0,
+      "failure_rate": 0.0,
+      "parser_fallback_frequency": 0.0,
+      "n_parse_mode_observed": 5,
+      "structured_response_compliance_rate": 1.0,
+      "average_response_length_chars": 295.2,
+      "n_response_length_observed": 5,
+      "confidence_distribution": {
+        "High": 5
+      }
+    },
+    "Risk Only": {
+      "n_records": 5,
+      "n_failed": 0,
+      "failure_rate": 0.0,
+      "parser_fallback_frequency": 0.0,
+      "n_parse_mode_observed": 5,
+      "structured_response_compliance_rate": 1.0,
+      "average_response_length_chars": 493.0,
+      "n_response_length_observed": 5,
+      "confidence_distribution": {
+        "Low": 5
+      }
+    }
+  },
+  "overall": {
+    "highest_failure_rate_config": "Full System",
+    "highest_failure_rate_value": 0.0,
+    "parser_fallback_frequency": 0.0,
+    "structured_response_compliance_rate": 1.0,
+    "confidence_distribution": {
+      "High": 15,
+      "Low": 10,
+      "Medium": 5
+    }
+  }
+}

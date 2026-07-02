@@ -1,0 +1,117 @@
+{
+  "per_config": {
+    "Full System": {
+      "n_records": 5,
+      "status_counts": {
+        "ok": 5
+      },
+      "retrieval_coverage": null,
+      "n_retrieval_observed": 0,
+      "confidence_distribution": {
+        "High": 5
+      },
+      "parse_mode_distribution": null,
+      "mean_mentor_response_chars": 283.2,
+      "n_response_length_observed": 5,
+      "live_llm_used_count": 5,
+      "offline_count": 0
+    },
+    "Without Retrieval": {
+      "n_records": 5,
+      "status_counts": {
+        "ok": 5
+      },
+      "retrieval_coverage": 0.0,
+      "n_retrieval_observed": 5,
+      "confidence_distribution": {
+        "High": 5
+      },
+      "parse_mode_distribution": {
+        "strict": 5
+      },
+      "mean_mentor_response_chars": 343.4,
+      "n_response_length_observed": 5,
+      "live_llm_used_count": 5,
+      "offline_count": 0
+    },
+    "Without Persona": {
+      "n_records": 5,
+      "status_counts": {
+        "ok": 5
+      },
+      "retrieval_coverage": 1.0,
+      "n_retrieval_observed": 5,
+      "confidence_distribution": {
+        "Low": 5
+      },
+      "parse_mode_distribution": {
+        "strict": 5
+      },
+      "mean_mentor_response_chars": 338.2,
+      "n_response_length_observed": 5,
+      "live_llm_used_count": 5,
+      "offline_count": 0
+    },
+    "Without SHAP": {
+      "n_records": 5,
+      "status_counts": {
+        "ok": 5
+      },
+      "retrieval_coverage": 1.0,
+      "n_retrieval_observed": 5,
+      "confidence_distribution": {
+        "Medium": 5
+      },
+      "parse_mode_distribution": {
+        "strict": 5
+      },
+      "mean_mentor_response_chars": 300.8,
+      "n_response_length_observed": 5,
+      "live_llm_used_count": 5,
+      "offline_count": 0
+    },
+    "Without Cognitive": {
+      "n_records": 5,
+      "status_counts": {
+        "ok": 5
+      },
+      "retrieval_coverage": 1.0,
+      "n_retrieval_observed": 5,
+      "confidence_distribution": {
+        "High": 5
+      },
+      "parse_mode_distribution": {
+        "strict": 5
+      },
+      "mean_mentor_response_chars": 295.2,
+      "n_response_length_observed": 5,
+      "live_llm_used_count": 5,
+      "offline_count": 0
+    },
+    "Risk Only": {
+      "n_records": 5,
+      "status_counts": {
+        "ok": 5
+      },
+      "retrieval_coverage": 1.0,
+      "n_retrieval_observed": 5,
+      "confidence_distribution": {
+        "Low": 5
+      },
+      "parse_mode_distribution": {
+        "strict": 5
+      },
+      "mean_mentor_response_chars": 493.0,
+      "n_response_length_observed": 5,
+      "live_llm_used_count": 5,
+      "offline_count": 0
+    }
+  },
+  "overall": {
+    "total_records": 30,
+    "ok": 30,
+    "status_counts": {
+      "ok": 30
+    }
+  }
+}

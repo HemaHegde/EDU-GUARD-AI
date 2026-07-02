@@ -1,0 +1,70 @@
+{
+  "execution_timestamp_utc": "2026-07-02T05:52:49.481884+00:00",
+  "working_directory": "C:\\Users\\Anika\\Downloads\\EDU-GUARD-AI-main\\ml\\reproducibility",
+  "project_root_detected": "C:\\Users\\Anika\\Downloads\\EDU-GUARD-AI-main",
+  "environment": {
+    "python_version": "3.11.5",
+    "python_implementation": "CPython",
+    "python_executable": "C:\\Users\\Anika\\Downloads\\EDU-GUARD-AI-main\\backend\\venv\\Scripts\\python.exe",
+    "os_system": "Windows",
+    "os_release": "10",
+    "os_version": "10.0.26200",
+    "os_platform": "Windows-10-10.0.26200-SP0",
+    "machine_arch": "AMD64",
+    "cpu_processor_string": "Intel64 Family 6 Model 170 Stepping 4, GenuineIntel",
+    "cpu_physical_cores": "16",
+    "cpu_logical_cores": "22",
+    "cpu_model_name": "Intel64 Family 6 Model 170 Stepping 4, GenuineIntel",
+    "ram_total_gb": "31.61",
+    "ram_available_gb": "15.64",
+    "gpu_detected": "No",
+    "gpu_details": "nvidia-smi not installed / no NVIDIA GPU",
+    "working_directory": "C:\\Users\\Anika\\Downloads\\EDU-GUARD-AI-main\\ml\\reproducibility",
+    "execution_timestamp_utc": "2026-07-02T05:52:49.481884+00:00",
+    "project_root_detected": "C:\\Users\\Anika\\Downloads\\EDU-GUARD-AI-main"
+  },
+  "software_versions": {
+    "xgboost_version": "3.2.0",
+    "tensorflow_version": "2.21.0",
+    "scikit_learn_version": "1.9.0",
+    "shap_version": "0.51.0",
+    "ollama_version": "ollama version is 0.7.1",
+    "ollama_models": "NAME                   ID              SIZE      MODIFIED; qwen2.5:3b             357c53fb659c    1.9 GB    3 weeks ago; mistral:latest         6577803aa9a0    4.4 GB    3 weeks ago; health:latest          a0e5922867a8    4.7 GB    12 months ago; llama3:latest          365c0bd3c000    4.7 GB    12 months ago; diet-mistral:latest    616cc265ca5d    4.1 GB    13 months ago"
+  },
+  "package_listing_source": "requirements.txt (package names), cross-referenced against actually-installed versions via importlib.metadata",
+  "installed_packages_count": 26,
+  "file_hashes": {
+    "prompt_template_hash": "3661846a5142b03245b4a63b5aeb38648c6cee397ad79e2119cef6f14b8029d2",
+    "prompt_template_source_functions": "_section_response_instructions, _section_system_role",
+    "prompt_builder_file_hash": "2893eeae542ee7921589efe4f71cdf859db728459af3ab8b7b306d4d1c7d2095",
+    "mentor_service_file_hash": "54c3e2d7a37b287075c82a436a9bbd131322dc0108f7ecebde62af1133032e6b",
+    "xgboost_model_hash": "216342fbd7c829e683eff84789c8c23cc294c7b667aaea5b7a6a82a19f898bb4",
+    "persona_kmeans_model_hash": "3d8b3bcd827b74ee2f0e49d4a225ef5be8c2772774b4cd94cc69058aa2a2ad44",
+    "persona_scaler_model_hash": "15e968591136d4d045573bea5e8d1acb85c204da6b29b9a48a39cd57bd95f4b4"
+  },
+  "model_metadata": {
+    "xgboost_feature_names": "[\"total_clicks\", \"avg_score\", \"active_days\", \"engagement_variability\", \"inactivity_days\", \"engagement_slope\", \"assessment_consistency\"]",
+    "xgboost_hyperparameters": "{\"objective\": \"binary:logistic\", \"colsample_bytree\": 0.8, \"enable_categorical\": false, \"eval_metric\": \"logloss\", \"learning_rate\": 0.03, \"max_depth\": 6, \"missing\": NaN, \"n_estimators\": 300, \"random_state\": 42, \"subsample\": 0.8, \"verbosity\": 0}",
+    "xgboost_random_state": "42",
+    "xgboost_n_features_in": "7",
+    "persona_kmeans_hyperparameters": "{\"algorithm\": \"lloyd\", \"copy_x\": true, \"init\": \"k-means++\", \"max_iter\": 300, \"n_clusters\": 6, \"n_init\": 10, \"random_state\": 42, \"tol\": 0.0001, \"verbose\": 0}",
+    "persona_kmeans_random_state": "42",
+    "persona_kmeans_n_features_in": "11",
+    "persona_kmeans_feature_names": "Not available",
+    "persona_scaler_hyperparameters": "{\"copy\": true, \"with_mean\": true, \"with_std\": true}",
+    "persona_scaler_random_state": "Not available",
+    "persona_scaler_n_features_in": "11",
+    "persona_scaler_feature_names": "[\"total_clicks\", \"avg_score\", \"active_days\", \"engagement_variability\", \"inactivity_days\", \"engagement_slope\", \"assessment_consistency\", \"attention_score\", \"confusion_score\", \"boredom_score\", \"cognitive_overload_score\"]"
+  },
+  "random_seed_findings": [
+    "xgboost_random_state (from serialized model params): 42",
+    "persona_kmeans_random_state (from serialized model params): 42"
+  ],
+  "discovered_paths": {
+    "prompt_builder_py": "C:\\Users\\Anika\\Downloads\\EDU-GUARD-AI-main\\backend\\services\\prompt_builder.py",
+    "mentor_service_py": "C:\\Users\\Anika\\Downloads\\EDU-GUARD-AI-main\\backend\\services\\mentor_service.py",
+    "academic_risk_xgboost_pkl": "C:\\Users\\Anika\\Downloads\\EDU-GUARD-AI-main\\ml\\academic_risk_xgboost.pkl",
+    "persona_kmeans_pkl": "C:\\Users\\Anika\\Downloads\\EDU-GUARD-AI-main\\ml\\persona_kmeans.pkl",
+    "persona_scaler_pkl": "C:\\Users\\Anika\\Downloads\\EDU-GUARD-AI-main\\ml\\persona_scaler.pkl"
+  }
+}
