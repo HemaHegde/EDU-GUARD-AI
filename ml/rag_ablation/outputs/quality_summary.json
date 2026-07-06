@@ -2,38 +2,38 @@
   "per_config": {
     "Full System": {
       "evidence_fusion_correctness": {
-        "n": 5,
-        "mean": 0.2,
-        "std": 0.1118,
-        "ci95_low": 0.102,
-        "ci95_high": 0.298,
+        "n": 10,
+        "mean": 0.0,
+        "std": 0.0,
+        "ci95_low": 0.0,
+        "ci95_high": 0.0,
         "note": "95% CI uses a normal approximation; treat as approximate for n < 30",
         "n_not_evaluated": 0
       },
       "priority_focus_correctness": {
-        "n": 5,
-        "mean": 0.8,
-        "std": 0.4472,
-        "ci95_low": 0.408,
-        "ci95_high": 1.192,
+        "n": 10,
+        "mean": 0.0,
+        "std": 0.0,
+        "ci95_low": 0.0,
+        "ci95_high": 0.0,
         "note": "95% CI uses a normal approximation; treat as approximate for n < 30",
         "n_not_evaluated": 0
       },
       "recommendation_quality": {
-        "n": 5,
-        "mean": 2.0,
-        "std": 1.0,
-        "ci95_low": 1.1235,
-        "ci95_high": 2.8765,
+        "n": 10,
+        "mean": 1.9,
+        "std": 0.3162,
+        "ci95_low": 1.704,
+        "ci95_high": 2.096,
         "note": "95% CI uses a normal approximation; treat as approximate for n < 30",
         "n_not_evaluated": 0
       },
       "persona_consistency": {
-        "n": 5,
-        "mean": 0.127,
+        "n": 10,
+        "mean": 0.6,
         "std": 0.0,
-        "ci95_low": 0.127,
-        "ci95_high": 0.127,
+        "ci95_low": 0.6,
+        "ci95_high": 0.6,
         "note": "95% CI uses a normal approximation; treat as approximate for n < 30",
         "n_not_evaluated": 0
       },
@@ -44,7 +44,7 @@
         "ci95_low": "Not Evaluated",
         "ci95_high": "Not Evaluated",
         "note": "fewer than 2 observations; std/CI not computable",
-        "n_not_evaluated": 5
+        "n_not_evaluated": 10
       },
       "grounding_shap": {
         "n": 0,
@@ -53,7 +53,7 @@
         "ci95_low": "Not Evaluated",
         "ci95_high": "Not Evaluated",
         "note": "fewer than 2 observations; std/CI not computable",
-        "n_not_evaluated": 5
+        "n_not_evaluated": 10
       },
       "grounding_risk": {
         "n": 0,
@@ -62,7 +62,7 @@
         "ci95_low": "Not Evaluated",
         "ci95_high": "Not Evaluated",
         "note": "fewer than 2 observations; std/CI not computable",
-        "n_not_evaluated": 5
+        "n_not_evaluated": 10
       },
       "grounding_cognitive": {
         "n": 0,
@@ -71,7 +71,7 @@
         "ci95_low": "Not Evaluated",
         "ci95_high": "Not Evaluated",
         "note": "fewer than 2 observations; std/CI not computable",
-        "n_not_evaluated": 5
+        "n_not_evaluated": 10
       },
       "grounding_overall": {
         "n": 0,
@@ -80,54 +80,72 @@
         "ci95_low": "Not Evaluated",
         "ci95_high": "Not Evaluated",
         "note": "fewer than 2 observations; std/CI not computable",
-        "n_not_evaluated": 5
+        "n_not_evaluated": 10
+      },
+      "bleu_score": {
+        "n": 10,
+        "mean": 0.0004,
+        "std": 0.0008,
+        "ci95_low": -0.0001,
+        "ci95_high": 0.0009,
+        "note": "95% CI uses a normal approximation; treat as approximate for n < 30",
+        "n_not_evaluated": 0
+      },
+      "semantic_similarity": {
+        "n": 10,
+        "mean": 0.0925,
+        "std": 0.1048,
+        "ci95_low": 0.0275,
+        "ci95_high": 0.1575,
+        "note": "95% CI uses a normal approximation; treat as approximate for n < 30",
+        "n_not_evaluated": 0
       },
       "recommendation_diversity": {
-        "n": 5,
-        "unique_ratio": 1.0,
-        "mean_pairwise_dissimilarity": 0.886
+        "n": 10,
+        "unique_ratio": 0.3,
+        "mean_pairwise_dissimilarity": 0.355
       },
       "tone_differentiation": {
-        "within_persona_similarity": "Not Evaluated",
-        "across_persona_similarity": "Not Evaluated",
-        "tone_differentiation": "Not Evaluated",
-        "note": "fewer than 2 personas observed in this config"
+        "within_persona_similarity": 0.6,
+        "across_persona_similarity": 0.653,
+        "tone_differentiation": -0.053,
+        "n_personas_observed": 2
       }
     },
     "Without Retrieval": {
       "evidence_fusion_correctness": {
-        "n": 5,
+        "n": 10,
         "mean": 0.2,
-        "std": 0.1118,
-        "ci95_low": 0.102,
-        "ci95_high": 0.298,
+        "std": 0.1972,
+        "ci95_low": 0.0778,
+        "ci95_high": 0.3222,
         "note": "95% CI uses a normal approximation; treat as approximate for n < 30",
         "n_not_evaluated": 0
       },
       "priority_focus_correctness": {
-        "n": 5,
-        "mean": 0.8,
-        "std": 0.4472,
-        "ci95_low": 0.408,
-        "ci95_high": 1.192,
+        "n": 10,
+        "mean": 0.6,
+        "std": 0.5164,
+        "ci95_low": 0.2799,
+        "ci95_high": 0.9201,
         "note": "95% CI uses a normal approximation; treat as approximate for n < 30",
         "n_not_evaluated": 0
       },
       "recommendation_quality": {
-        "n": 5,
-        "mean": 1.8,
-        "std": 0.8367,
-        "ci95_low": 1.0666,
-        "ci95_high": 2.5334,
+        "n": 10,
+        "mean": 1.9,
+        "std": 0.8756,
+        "ci95_low": 1.3573,
+        "ci95_high": 2.4427,
         "note": "95% CI uses a normal approximation; treat as approximate for n < 30",
         "n_not_evaluated": 0
       },
       "persona_consistency": {
-        "n": 5,
-        "mean": 0.216,
-        "std": 0.0,
-        "ci95_low": 0.216,
-        "ci95_high": 0.216,
+        "n": 10,
+        "mean": 0.1115,
+        "std": 0.029,
+        "ci95_low": 0.0935,
+        "ci95_high": 0.1295,
         "note": "95% CI uses a normal approximation; treat as approximate for n < 30",
         "n_not_evaluated": 0
       },
@@ -138,19 +156,28 @@
         "ci95_low": "Not Evaluated",
         "ci95_high": "Not Evaluated",
         "note": "fewer than 2 observations; std/CI not computable",
-        "n_not_evaluated": 5
+        "n_not_evaluated": 10
       },
       "grounding_shap": {
-        "n": 5,
-        "mean": 0.0,
-        "std": 0.0,
-        "ci95_low": 0.0,
-        "ci95_high": 0.0,
+        "n": 10,
+        "mean": 0.0063,
+        "std": 0.0133,
+        "ci95_low": -0.0019,
+        "ci95_high": 0.0145,
         "note": "95% CI uses a normal approximation; treat as approximate for n < 30",
         "n_not_evaluated": 0
       },
       "grounding_risk": {
-        "n": 5,
+        "n": 10,
+        "mean": 0.0216,
+        "std": 0.0462,
+        "ci95_low": -0.0071,
+        "ci95_high": 0.0503,
+        "note": "95% CI uses a normal approximation; treat as approximate for n < 30",
+        "n_not_evaluated": 0
+      },
+      "grounding_cognitive": {
+        "n": 10,
         "mean": 0.0,
         "std": 0.0,
         "ci95_low": 0.0,
@@ -158,61 +185,70 @@
         "note": "95% CI uses a normal approximation; treat as approximate for n < 30",
         "n_not_evaluated": 0
       },
-      "grounding_cognitive": {
-        "n": 5,
-        "mean": 0.0086,
-        "std": 0.0192,
-        "ci95_low": -0.0083,
-        "ci95_high": 0.0255,
+      "grounding_overall": {
+        "n": 10,
+        "mean": 0.0093,
+        "std": 0.0198,
+        "ci95_low": -0.003,
+        "ci95_high": 0.0216,
         "note": "95% CI uses a normal approximation; treat as approximate for n < 30",
         "n_not_evaluated": 0
       },
-      "grounding_overall": {
-        "n": 5,
-        "mean": 0.0028,
-        "std": 0.0063,
-        "ci95_low": -0.0027,
-        "ci95_high": 0.0083,
+      "bleu_score": {
+        "n": 10,
+        "mean": 0.0093,
+        "std": 0.0181,
+        "ci95_low": -0.0018,
+        "ci95_high": 0.0205,
+        "note": "95% CI uses a normal approximation; treat as approximate for n < 30",
+        "n_not_evaluated": 0
+      },
+      "semantic_similarity": {
+        "n": 10,
+        "mean": 0.4453,
+        "std": 0.1624,
+        "ci95_low": 0.3447,
+        "ci95_high": 0.546,
         "note": "95% CI uses a normal approximation; treat as approximate for n < 30",
         "n_not_evaluated": 0
       },
       "recommendation_diversity": {
-        "n": 5,
-        "unique_ratio": 1.0,
-        "mean_pairwise_dissimilarity": 0.805
+        "n": 10,
+        "unique_ratio": 0.9,
+        "mean_pairwise_dissimilarity": 0.893
       },
       "tone_differentiation": {
-        "within_persona_similarity": "Not Evaluated",
-        "across_persona_similarity": "Not Evaluated",
-        "tone_differentiation": "Not Evaluated",
-        "note": "fewer than 2 personas observed in this config"
+        "within_persona_similarity": 0.112,
+        "across_persona_similarity": 0.101,
+        "tone_differentiation": 0.011,
+        "n_personas_observed": 2
       }
     },
     "Without Persona": {
       "evidence_fusion_correctness": {
-        "n": 5,
-        "mean": 0.15,
-        "std": 0.1369,
-        "ci95_low": 0.03,
-        "ci95_high": 0.27,
+        "n": 10,
+        "mean": 0.25,
+        "std": 0.1667,
+        "ci95_low": 0.1467,
+        "ci95_high": 0.3533,
         "note": "95% CI uses a normal approximation; treat as approximate for n < 30",
         "n_not_evaluated": 0
       },
       "priority_focus_correctness": {
-        "n": 5,
-        "mean": 0.4,
-        "std": 0.5477,
-        "ci95_low": -0.0801,
-        "ci95_high": 0.8801,
+        "n": 10,
+        "mean": 0.5,
+        "std": 0.527,
+        "ci95_low": 0.1733,
+        "ci95_high": 0.8267,
         "note": "95% CI uses a normal approximation; treat as approximate for n < 30",
         "n_not_evaluated": 0
       },
       "recommendation_quality": {
-        "n": 5,
-        "mean": 2.4,
-        "std": 0.8944,
-        "ci95_low": 1.616,
-        "ci95_high": 3.184,
+        "n": 10,
+        "mean": 2.9,
+        "std": 0.3162,
+        "ci95_low": 2.704,
+        "ci95_high": 3.096,
         "note": "95% CI uses a normal approximation; treat as approximate for n < 30",
         "n_not_evaluated": 0
       },
@@ -223,57 +259,75 @@
         "ci95_low": "Not Evaluated",
         "ci95_high": "Not Evaluated",
         "note": "fewer than 2 observations; std/CI not computable",
-        "n_not_evaluated": 5
+        "n_not_evaluated": 10
       },
       "educational_usefulness": {
-        "n": 5,
-        "mean": 0.0114,
-        "std": 0.017,
-        "ci95_low": -0.0035,
-        "ci95_high": 0.0263,
+        "n": 10,
+        "mean": 0.0849,
+        "std": 0.1181,
+        "ci95_low": 0.0117,
+        "ci95_high": 0.1581,
         "note": "95% CI uses a normal approximation; treat as approximate for n < 30",
         "n_not_evaluated": 0
       },
       "grounding_shap": {
-        "n": 5,
-        "mean": 0.0194,
-        "std": 0.0434,
-        "ci95_low": -0.0186,
-        "ci95_high": 0.0574,
+        "n": 10,
+        "mean": 0.0,
+        "std": 0.0,
+        "ci95_low": 0.0,
+        "ci95_high": 0.0,
         "note": "95% CI uses a normal approximation; treat as approximate for n < 30",
         "n_not_evaluated": 0
       },
       "grounding_risk": {
-        "n": 5,
-        "mean": 0.0182,
-        "std": 0.0407,
-        "ci95_low": -0.0175,
-        "ci95_high": 0.0539,
+        "n": 10,
+        "mean": 0.0091,
+        "std": 0.0288,
+        "ci95_low": -0.0087,
+        "ci95_high": 0.0269,
         "note": "95% CI uses a normal approximation; treat as approximate for n < 30",
         "n_not_evaluated": 0
       },
       "grounding_cognitive": {
-        "n": 5,
-        "mean": 0.0172,
-        "std": 0.0236,
-        "ci95_low": -0.0034,
-        "ci95_high": 0.0378,
+        "n": 10,
+        "mean": 0.0261,
+        "std": 0.042,
+        "ci95_low": 0.0001,
+        "ci95_high": 0.0521,
         "note": "95% CI uses a normal approximation; treat as approximate for n < 30",
         "n_not_evaluated": 0
       },
       "grounding_overall": {
-        "n": 5,
-        "mean": 0.0182,
-        "std": 0.0334,
-        "ci95_low": -0.0111,
-        "ci95_high": 0.0475,
+        "n": 10,
+        "mean": 0.0117,
+        "std": 0.0205,
+        "ci95_low": -0.001,
+        "ci95_high": 0.0244,
+        "note": "95% CI uses a normal approximation; treat as approximate for n < 30",
+        "n_not_evaluated": 0
+      },
+      "bleu_score": {
+        "n": 10,
+        "mean": 0.0049,
+        "std": 0.0023,
+        "ci95_low": 0.0034,
+        "ci95_high": 0.0063,
+        "note": "95% CI uses a normal approximation; treat as approximate for n < 30",
+        "n_not_evaluated": 0
+      },
+      "semantic_similarity": {
+        "n": 10,
+        "mean": 0.4178,
+        "std": 0.189,
+        "ci95_low": 0.3007,
+        "ci95_high": 0.535,
         "note": "95% CI uses a normal approximation; treat as approximate for n < 30",
         "n_not_evaluated": 0
       },
       "recommendation_diversity": {
-        "n": 5,
+        "n": 10,
         "unique_ratio": 1.0,
-        "mean_pairwise_dissimilarity": 0.958
+        "mean_pairwise_dissimilarity": 0.902
       },
       "tone_differentiation": {
         "within_persona_similarity": "Not Evaluated",
@@ -284,47 +338,47 @@
     },
     "Without SHAP": {
       "evidence_fusion_correctness": {
-        "n": 5,
-        "mean": 0.15,
-        "std": 0.1369,
-        "ci95_low": 0.03,
-        "ci95_high": 0.27,
+        "n": 10,
+        "mean": 0.2,
+        "std": 0.2582,
+        "ci95_low": 0.04,
+        "ci95_high": 0.36,
         "note": "95% CI uses a normal approximation; treat as approximate for n < 30",
         "n_not_evaluated": 0
       },
       "priority_focus_correctness": {
-        "n": 5,
-        "mean": 0.6,
-        "std": 0.5477,
-        "ci95_low": 0.1199,
-        "ci95_high": 1.0801,
+        "n": 10,
+        "mean": 0.4,
+        "std": 0.5164,
+        "ci95_low": 0.0799,
+        "ci95_high": 0.7201,
         "note": "95% CI uses a normal approximation; treat as approximate for n < 30",
         "n_not_evaluated": 0
       },
       "recommendation_quality": {
-        "n": 5,
-        "mean": 2.2,
-        "std": 0.8367,
-        "ci95_low": 1.4666,
-        "ci95_high": 2.9334,
+        "n": 10,
+        "mean": 1.7,
+        "std": 0.6749,
+        "ci95_low": 1.2817,
+        "ci95_high": 2.1183,
         "note": "95% CI uses a normal approximation; treat as approximate for n < 30",
         "n_not_evaluated": 0
       },
       "persona_consistency": {
-        "n": 5,
-        "mean": 0.224,
-        "std": 0.0,
-        "ci95_low": 0.224,
-        "ci95_high": 0.224,
+        "n": 10,
+        "mean": 0.1125,
+        "std": 0.0111,
+        "ci95_low": 0.1056,
+        "ci95_high": 0.1194,
         "note": "95% CI uses a normal approximation; treat as approximate for n < 30",
         "n_not_evaluated": 0
       },
       "educational_usefulness": {
-        "n": 5,
-        "mean": 0.0152,
-        "std": 0.0085,
-        "ci95_low": 0.0078,
-        "ci95_high": 0.0226,
+        "n": 10,
+        "mean": 0.0397,
+        "std": 0.0926,
+        "ci95_low": -0.0177,
+        "ci95_high": 0.0971,
         "note": "95% CI uses a normal approximation; treat as approximate for n < 30",
         "n_not_evaluated": 0
       },
@@ -335,108 +389,126 @@
         "ci95_low": "Not Evaluated",
         "ci95_high": "Not Evaluated",
         "note": "fewer than 2 observations; std/CI not computable",
-        "n_not_evaluated": 5
+        "n_not_evaluated": 10
       },
       "grounding_risk": {
-        "n": 5,
-        "mean": 0.0182,
-        "std": 0.0407,
-        "ci95_low": -0.0175,
-        "ci95_high": 0.0539,
+        "n": 10,
+        "mean": 0.0091,
+        "std": 0.0288,
+        "ci95_low": -0.0087,
+        "ci95_high": 0.0269,
         "note": "95% CI uses a normal approximation; treat as approximate for n < 30",
         "n_not_evaluated": 0
       },
       "grounding_cognitive": {
-        "n": 5,
-        "mean": 0.0,
-        "std": 0.0,
-        "ci95_low": 0.0,
-        "ci95_high": 0.0,
+        "n": 10,
+        "mean": 0.01,
+        "std": 0.0211,
+        "ci95_low": -0.0031,
+        "ci95_high": 0.0231,
         "note": "95% CI uses a normal approximation; treat as approximate for n < 30",
         "n_not_evaluated": 0
       },
       "grounding_overall": {
-        "n": 5,
-        "mean": 0.009,
-        "std": 0.0201,
-        "ci95_low": -0.0086,
-        "ci95_high": 0.0266,
+        "n": 10,
+        "mean": 0.0095,
+        "std": 0.0162,
+        "ci95_low": -0.0006,
+        "ci95_high": 0.0196,
+        "note": "95% CI uses a normal approximation; treat as approximate for n < 30",
+        "n_not_evaluated": 0
+      },
+      "bleu_score": {
+        "n": 10,
+        "mean": 0.0042,
+        "std": 0.0019,
+        "ci95_low": 0.0031,
+        "ci95_high": 0.0054,
+        "note": "95% CI uses a normal approximation; treat as approximate for n < 30",
+        "n_not_evaluated": 0
+      },
+      "semantic_similarity": {
+        "n": 10,
+        "mean": 0.4197,
+        "std": 0.1526,
+        "ci95_low": 0.3251,
+        "ci95_high": 0.5143,
         "note": "95% CI uses a normal approximation; treat as approximate for n < 30",
         "n_not_evaluated": 0
       },
       "recommendation_diversity": {
-        "n": 5,
-        "unique_ratio": 1.0,
-        "mean_pairwise_dissimilarity": 0.943
+        "n": 10,
+        "unique_ratio": 0.9,
+        "mean_pairwise_dissimilarity": 0.883
       },
       "tone_differentiation": {
-        "within_persona_similarity": "Not Evaluated",
-        "across_persona_similarity": "Not Evaluated",
-        "tone_differentiation": "Not Evaluated",
-        "note": "fewer than 2 personas observed in this config"
+        "within_persona_similarity": 0.113,
+        "across_persona_similarity": 0.065,
+        "tone_differentiation": 0.048,
+        "n_personas_observed": 2
       }
     },
     "Without Cognitive": {
       "evidence_fusion_correctness": {
-        "n": 5,
+        "n": 10,
         "mean": 0.05,
-        "std": 0.1118,
-        "ci95_low": -0.048,
-        "ci95_high": 0.148,
+        "std": 0.1054,
+        "ci95_low": -0.0153,
+        "ci95_high": 0.1153,
         "note": "95% CI uses a normal approximation; treat as approximate for n < 30",
         "n_not_evaluated": 0
       },
       "priority_focus_correctness": {
-        "n": 5,
-        "mean": 0.6,
-        "std": 0.5477,
-        "ci95_low": 0.1199,
-        "ci95_high": 1.0801,
+        "n": 10,
+        "mean": 0.5,
+        "std": 0.527,
+        "ci95_low": 0.1733,
+        "ci95_high": 0.8267,
         "note": "95% CI uses a normal approximation; treat as approximate for n < 30",
         "n_not_evaluated": 0
       },
       "recommendation_quality": {
-        "n": 5,
-        "mean": 2.4,
-        "std": 0.8944,
-        "ci95_low": 1.616,
-        "ci95_high": 3.184,
+        "n": 10,
+        "mean": 2.0,
+        "std": 0.8165,
+        "ci95_low": 1.4939,
+        "ci95_high": 2.5061,
         "note": "95% CI uses a normal approximation; treat as approximate for n < 30",
         "n_not_evaluated": 0
       },
       "persona_consistency": {
-        "n": 5,
-        "mean": 0.179,
-        "std": 0.0,
-        "ci95_low": 0.179,
-        "ci95_high": 0.179,
+        "n": 10,
+        "mean": 0.103,
+        "std": 0.0253,
+        "ci95_low": 0.0873,
+        "ci95_high": 0.1187,
         "note": "95% CI uses a normal approximation; treat as approximate for n < 30",
         "n_not_evaluated": 0
       },
       "educational_usefulness": {
-        "n": 5,
-        "mean": 0.0076,
-        "std": 0.0104,
-        "ci95_low": -0.0015,
-        "ci95_high": 0.0167,
+        "n": 10,
+        "mean": 0.0019,
+        "std": 0.006,
+        "ci95_low": -0.0018,
+        "ci95_high": 0.0056,
         "note": "95% CI uses a normal approximation; treat as approximate for n < 30",
         "n_not_evaluated": 0
       },
       "grounding_shap": {
-        "n": 5,
-        "mean": 0.0064,
-        "std": 0.0143,
-        "ci95_low": -0.0061,
-        "ci95_high": 0.0189,
+        "n": 10,
+        "mean": 0.016,
+        "std": 0.0409,
+        "ci95_low": -0.0093,
+        "ci95_high": 0.0413,
         "note": "95% CI uses a normal approximation; treat as approximate for n < 30",
         "n_not_evaluated": 0
       },
       "grounding_risk": {
-        "n": 5,
-        "mean": 0.0182,
-        "std": 0.0407,
-        "ci95_low": -0.0175,
-        "ci95_high": 0.0539,
+        "n": 10,
+        "mean": 0.0216,
+        "std": 0.0462,
+        "ci95_low": -0.0071,
+        "ci95_high": 0.0503,
         "note": "95% CI uses a normal approximation; treat as approximate for n < 30",
         "n_not_evaluated": 0
       },
@@ -447,21 +519,151 @@
         "ci95_low": "Not Evaluated",
         "ci95_high": "Not Evaluated",
         "note": "fewer than 2 observations; std/CI not computable",
-        "n_not_evaluated": 5
+        "n_not_evaluated": 10
       },
       "grounding_overall": {
-        "n": 5,
-        "mean": 0.0124,
-        "std": 0.0277,
-        "ci95_low": -0.0119,
-        "ci95_high": 0.0367,
+        "n": 10,
+        "mean": 0.0188,
+        "std": 0.0403,
+        "ci95_low": -0.0062,
+        "ci95_high": 0.0438,
+        "note": "95% CI uses a normal approximation; treat as approximate for n < 30",
+        "n_not_evaluated": 0
+      },
+      "bleu_score": {
+        "n": 10,
+        "mean": 0.0043,
+        "std": 0.0028,
+        "ci95_low": 0.0025,
+        "ci95_high": 0.006,
+        "note": "95% CI uses a normal approximation; treat as approximate for n < 30",
+        "n_not_evaluated": 0
+      },
+      "semantic_similarity": {
+        "n": 10,
+        "mean": 0.4338,
+        "std": 0.1526,
+        "ci95_low": 0.3392,
+        "ci95_high": 0.5283,
         "note": "95% CI uses a normal approximation; treat as approximate for n < 30",
         "n_not_evaluated": 0
       },
       "recommendation_diversity": {
-        "n": 5,
+        "n": 10,
+        "unique_ratio": 0.9,
+        "mean_pairwise_dissimilarity": 0.911
+      },
+      "tone_differentiation": {
+        "within_persona_similarity": 0.103,
+        "across_persona_similarity": 0.108,
+        "tone_differentiation": -0.005,
+        "n_personas_observed": 2
+      }
+    },
+    "Risk Only": {
+      "evidence_fusion_correctness": {
+        "n": 10,
+        "mean": 0.25,
+        "std": 0.2635,
+        "ci95_low": 0.0867,
+        "ci95_high": 0.4133,
+        "note": "95% CI uses a normal approximation; treat as approximate for n < 30",
+        "n_not_evaluated": 0
+      },
+      "priority_focus_correctness": {
+        "n": 10,
+        "mean": 0.6,
+        "std": 0.5164,
+        "ci95_low": 0.2799,
+        "ci95_high": 0.9201,
+        "note": "95% CI uses a normal approximation; treat as approximate for n < 30",
+        "n_not_evaluated": 0
+      },
+      "recommendation_quality": {
+        "n": 10,
+        "mean": 2.4,
+        "std": 0.6992,
+        "ci95_low": 1.9666,
+        "ci95_high": 2.8334,
+        "note": "95% CI uses a normal approximation; treat as approximate for n < 30",
+        "n_not_evaluated": 0
+      },
+      "persona_consistency": {
+        "n": 0,
+        "mean": "Not Evaluated",
+        "std": "Not Evaluated",
+        "ci95_low": "Not Evaluated",
+        "ci95_high": "Not Evaluated",
+        "note": "fewer than 2 observations; std/CI not computable",
+        "n_not_evaluated": 10
+      },
+      "educational_usefulness": {
+        "n": 10,
+        "mean": 0.0679,
+        "std": 0.0946,
+        "ci95_low": 0.0092,
+        "ci95_high": 0.1266,
+        "note": "95% CI uses a normal approximation; treat as approximate for n < 30",
+        "n_not_evaluated": 0
+      },
+      "grounding_shap": {
+        "n": 0,
+        "mean": "Not Evaluated",
+        "std": "Not Evaluated",
+        "ci95_low": "Not Evaluated",
+        "ci95_high": "Not Evaluated",
+        "note": "fewer than 2 observations; std/CI not computable",
+        "n_not_evaluated": 10
+      },
+      "grounding_risk": {
+        "n": 10,
+        "mean": 0.0091,
+        "std": 0.0288,
+        "ci95_low": -0.0087,
+        "ci95_high": 0.0269,
+        "note": "95% CI uses a normal approximation; treat as approximate for n < 30",
+        "n_not_evaluated": 0
+      },
+      "grounding_cognitive": {
+        "n": 0,
+        "mean": "Not Evaluated",
+        "std": "Not Evaluated",
+        "ci95_low": "Not Evaluated",
+        "ci95_high": "Not Evaluated",
+        "note": "fewer than 2 observations; std/CI not computable",
+        "n_not_evaluated": 10
+      },
+      "grounding_overall": {
+        "n": 10,
+        "mean": 0.0091,
+        "std": 0.0288,
+        "ci95_low": -0.0087,
+        "ci95_high": 0.0269,
+        "note": "95% CI uses a normal approximation; treat as approximate for n < 30",
+        "n_not_evaluated": 0
+      },
+      "bleu_score": {
+        "n": 10,
+        "mean": 0.0073,
+        "std": 0.0049,
+        "ci95_low": 0.0043,
+        "ci95_high": 0.0104,
+        "note": "95% CI uses a normal approximation; treat as approximate for n < 30",
+        "n_not_evaluated": 0
+      },
+      "semantic_similarity": {
+        "n": 10,
+        "mean": 0.4465,
+        "std": 0.1511,
+        "ci95_low": 0.3529,
+        "ci95_high": 0.5401,
+        "note": "95% CI uses a normal approximation; treat as approximate for n < 30",
+        "n_not_evaluated": 0
+      },
+      "recommendation_diversity": {
+        "n": 10,
         "unique_ratio": 1.0,
-        "mean_pairwise_dissimilarity": 0.923
+        "mean_pairwise_dissimilarity": 0.892
       },
       "tone_differentiation": {
         "within_persona_similarity": "Not Evaluated",
@@ -470,31 +672,31 @@
         "note": "fewer than 2 personas observed in this config"
       }
     },
-    "Risk Only": {
+    "LLM Only": {
       "evidence_fusion_correctness": {
-        "n": 5,
-        "mean": 0.3,
-        "std": 0.2739,
-        "ci95_low": 0.06,
-        "ci95_high": 0.54,
-        "note": "95% CI uses a normal approximation; treat as approximate for n < 30",
-        "n_not_evaluated": 0
+        "n": 0,
+        "mean": "Not Evaluated",
+        "std": "Not Evaluated",
+        "ci95_low": "Not Evaluated",
+        "ci95_high": "Not Evaluated",
+        "note": "fewer than 2 observations; std/CI not computable",
+        "n_not_evaluated": 10
       },
       "priority_focus_correctness": {
-        "n": 5,
-        "mean": 0.4,
-        "std": 0.5477,
-        "ci95_low": -0.0801,
-        "ci95_high": 0.8801,
-        "note": "95% CI uses a normal approximation; treat as approximate for n < 30",
-        "n_not_evaluated": 0
+        "n": 0,
+        "mean": "Not Evaluated",
+        "std": "Not Evaluated",
+        "ci95_low": "Not Evaluated",
+        "ci95_high": "Not Evaluated",
+        "note": "fewer than 2 observations; std/CI not computable",
+        "n_not_evaluated": 10
       },
       "recommendation_quality": {
-        "n": 5,
-        "mean": 2.0,
-        "std": 0.0,
-        "ci95_low": 2.0,
-        "ci95_high": 2.0,
+        "n": 10,
+        "mean": 1.9,
+        "std": 0.3162,
+        "ci95_low": 1.704,
+        "ci95_high": 2.096,
         "note": "95% CI uses a normal approximation; treat as approximate for n < 30",
         "n_not_evaluated": 0
       },
@@ -505,16 +707,16 @@
         "ci95_low": "Not Evaluated",
         "ci95_high": "Not Evaluated",
         "note": "fewer than 2 observations; std/CI not computable",
-        "n_not_evaluated": 5
+        "n_not_evaluated": 10
       },
       "educational_usefulness": {
-        "n": 5,
-        "mean": 0.1924,
-        "std": 0.2388,
-        "ci95_low": -0.0169,
-        "ci95_high": 0.4017,
-        "note": "95% CI uses a normal approximation; treat as approximate for n < 30",
-        "n_not_evaluated": 0
+        "n": 0,
+        "mean": "Not Evaluated",
+        "std": "Not Evaluated",
+        "ci95_low": "Not Evaluated",
+        "ci95_high": "Not Evaluated",
+        "note": "fewer than 2 observations; std/CI not computable",
+        "n_not_evaluated": 10
       },
       "grounding_shap": {
         "n": 0,
@@ -523,16 +725,16 @@
         "ci95_low": "Not Evaluated",
         "ci95_high": "Not Evaluated",
         "note": "fewer than 2 observations; std/CI not computable",
-        "n_not_evaluated": 5
+        "n_not_evaluated": 10
       },
       "grounding_risk": {
-        "n": 5,
-        "mean": 0.0182,
-        "std": 0.0407,
-        "ci95_low": -0.0175,
-        "ci95_high": 0.0539,
-        "note": "95% CI uses a normal approximation; treat as approximate for n < 30",
-        "n_not_evaluated": 0
+        "n": 0,
+        "mean": "Not Evaluated",
+        "std": "Not Evaluated",
+        "ci95_low": "Not Evaluated",
+        "ci95_high": "Not Evaluated",
+        "note": "fewer than 2 observations; std/CI not computable",
+        "n_not_evaluated": 10
       },
       "grounding_cognitive": {
         "n": 0,
@@ -541,21 +743,39 @@
         "ci95_low": "Not Evaluated",
         "ci95_high": "Not Evaluated",
         "note": "fewer than 2 observations; std/CI not computable",
-        "n_not_evaluated": 5
+        "n_not_evaluated": 10
       },
       "grounding_overall": {
-        "n": 5,
-        "mean": 0.0182,
-        "std": 0.0407,
-        "ci95_low": -0.0175,
-        "ci95_high": 0.0539,
+        "n": 0,
+        "mean": "Not Evaluated",
+        "std": "Not Evaluated",
+        "ci95_low": "Not Evaluated",
+        "ci95_high": "Not Evaluated",
+        "note": "fewer than 2 observations; std/CI not computable",
+        "n_not_evaluated": 10
+      },
+      "bleu_score": {
+        "n": 10,
+        "mean": 0.0051,
+        "std": 0.0022,
+        "ci95_low": 0.0037,
+        "ci95_high": 0.0064,
+        "note": "95% CI uses a normal approximation; treat as approximate for n < 30",
+        "n_not_evaluated": 0
+      },
+      "semantic_similarity": {
+        "n": 10,
+        "mean": 0.548,
+        "std": 0.1475,
+        "ci95_low": 0.4565,
+        "ci95_high": 0.6394,
         "note": "95% CI uses a normal approximation; treat as approximate for n < 30",
         "n_not_evaluated": 0
       },
       "recommendation_diversity": {
-        "n": 5,
+        "n": 10,
         "unique_ratio": 1.0,
-        "mean_pairwise_dissimilarity": 0.95
+        "mean_pairwise_dissimilarity": 0.958
       },
       "tone_differentiation": {
         "within_persona_similarity": "Not Evaluated",
@@ -568,371 +788,157 @@
   "paired_vs_full_system": {
     "Without Retrieval": {
       "evidence_fusion_correctness": {
-        "n_pairs": 5,
-        "mean_diff": 0.0,
-        "std_diff": 0.0,
-        "t_stat": NaN,
-        "p_value": NaN,
-        "recommended_test": "Wilcoxon signed-rank",
-        "recommended_p_value": "Not Evaluated",
-        "recommended_statistic": "Not Evaluated",
-        "normality_p_value": 1.0,
-        "effect_size": "Not Evaluated",
-        "effect_size_type": "Not Evaluated",
-        "sample_size": 5,
-        "stat_note": "all paired differences are exactly zero; Wilcoxon not computable"
-      },
-      "priority_focus_correctness": {
-        "n_pairs": 5,
-        "mean_diff": 0.0,
-        "std_diff": 0.0,
-        "t_stat": NaN,
-        "p_value": NaN,
-        "recommended_test": "Wilcoxon signed-rank",
-        "recommended_p_value": "Not Evaluated",
-        "recommended_statistic": "Not Evaluated",
-        "normality_p_value": 1.0,
-        "effect_size": "Not Evaluated",
-        "effect_size_type": "Not Evaluated",
-        "sample_size": 5,
-        "stat_note": "all paired differences are exactly zero; Wilcoxon not computable"
-      },
-      "recommendation_quality": {
-        "n_pairs": 5,
-        "mean_diff": -0.2,
-        "std_diff": 1.0954,
-        "t_stat": -0.4082,
-        "p_value": 0.704,
-        "recommended_test": "paired t-test",
-        "recommended_p_value": 0.704,
-        "recommended_statistic": -0.4082,
-        "normality_p_value": 0.135,
-        "effect_size": -0.1826,
-        "effect_size_type": "Cohen's d_z (mean paired diff / std of paired diffs)",
-        "sample_size": 5
-      },
-      "persona_consistency": {
-        "n_pairs": 5,
-        "mean_diff": 0.089,
-        "std_diff": 0.0,
-        "t_stat": Infinity,
-        "p_value": 0.0,
-        "recommended_test": "Wilcoxon signed-rank",
-        "recommended_p_value": 0.0625,
-        "recommended_statistic": 0.0,
-        "normality_p_value": 1.0,
-        "effect_size": 0.833,
-        "effect_size_type": "matched-pairs rank-biserial r (approximate, from normal-approx Z)",
-        "sample_size": 5
-      },
-      "educational_usefulness": {
-        "n_pairs": 0,
-        "mean_diff": "Not Evaluated",
-        "note": "fewer than 2 paired observations"
-      },
-      "grounding_shap": {
-        "n_pairs": 0,
-        "mean_diff": "Not Evaluated",
-        "note": "fewer than 2 paired observations"
-      },
-      "grounding_risk": {
-        "n_pairs": 0,
-        "mean_diff": "Not Evaluated",
-        "note": "fewer than 2 paired observations"
-      },
-      "grounding_cognitive": {
-        "n_pairs": 0,
-        "mean_diff": "Not Evaluated",
-        "note": "fewer than 2 paired observations"
-      },
-      "grounding_overall": {
-        "n_pairs": 0,
-        "mean_diff": "Not Evaluated",
-        "note": "fewer than 2 paired observations"
-      }
-    },
-    "Without Persona": {
-      "evidence_fusion_correctness": {
-        "n_pairs": 5,
-        "mean_diff": -0.05,
-        "std_diff": 0.1118,
-        "t_stat": -1.0,
-        "p_value": 0.3739,
-        "recommended_test": "Wilcoxon signed-rank",
-        "recommended_p_value": 1.0,
-        "recommended_statistic": 0.0,
-        "normality_p_value": 0.0001,
-        "effect_size": -0.0,
-        "effect_size_type": "matched-pairs rank-biserial r (approximate, from normal-approx Z)",
-        "sample_size": 5
-      },
-      "priority_focus_correctness": {
-        "n_pairs": 5,
-        "mean_diff": -0.4,
-        "std_diff": 0.5477,
-        "t_stat": -1.633,
-        "p_value": 0.1778,
-        "recommended_test": "Wilcoxon signed-rank",
-        "recommended_p_value": 0.5,
-        "recommended_statistic": 0.0,
-        "normality_p_value": 0.0065,
-        "effect_size": -0.4769,
-        "effect_size_type": "matched-pairs rank-biserial r (approximate, from normal-approx Z)",
-        "sample_size": 5
-      },
-      "recommendation_quality": {
-        "n_pairs": 5,
-        "mean_diff": 0.4,
-        "std_diff": 0.5477,
-        "t_stat": 1.633,
-        "p_value": 0.1778,
-        "recommended_test": "Wilcoxon signed-rank",
-        "recommended_p_value": 0.5,
-        "recommended_statistic": 0.0,
-        "normality_p_value": 0.0065,
-        "effect_size": 0.4769,
-        "effect_size_type": "matched-pairs rank-biserial r (approximate, from normal-approx Z)",
-        "sample_size": 5
-      },
-      "persona_consistency": {
-        "n_pairs": 0,
-        "mean_diff": "Not Evaluated",
-        "note": "fewer than 2 paired observations"
-      },
-      "educational_usefulness": {
-        "n_pairs": 0,
-        "mean_diff": "Not Evaluated",
-        "note": "fewer than 2 paired observations"
-      },
-      "grounding_shap": {
-        "n_pairs": 0,
-        "mean_diff": "Not Evaluated",
-        "note": "fewer than 2 paired observations"
-      },
-      "grounding_risk": {
-        "n_pairs": 0,
-        "mean_diff": "Not Evaluated",
-        "note": "fewer than 2 paired observations"
-      },
-      "grounding_cognitive": {
-        "n_pairs": 0,
-        "mean_diff": "Not Evaluated",
-        "note": "fewer than 2 paired observations"
-      },
-      "grounding_overall": {
-        "n_pairs": 0,
-        "mean_diff": "Not Evaluated",
-        "note": "fewer than 2 paired observations"
-      }
-    },
-    "Without SHAP": {
-      "evidence_fusion_correctness": {
-        "n_pairs": 5,
-        "mean_diff": -0.05,
-        "std_diff": 0.1118,
-        "t_stat": -1.0,
-        "p_value": 0.3739,
-        "recommended_test": "Wilcoxon signed-rank",
-        "recommended_p_value": 1.0,
-        "recommended_statistic": 0.0,
-        "normality_p_value": 0.0001,
-        "effect_size": -0.0,
-        "effect_size_type": "matched-pairs rank-biserial r (approximate, from normal-approx Z)",
-        "sample_size": 5
-      },
-      "priority_focus_correctness": {
-        "n_pairs": 5,
-        "mean_diff": -0.2,
-        "std_diff": 0.4472,
-        "t_stat": -1.0,
-        "p_value": 0.3739,
-        "recommended_test": "Wilcoxon signed-rank",
-        "recommended_p_value": 1.0,
-        "recommended_statistic": 0.0,
-        "normality_p_value": 0.0001,
-        "effect_size": -0.0,
-        "effect_size_type": "matched-pairs rank-biserial r (approximate, from normal-approx Z)",
-        "sample_size": 5
-      },
-      "recommendation_quality": {
-        "n_pairs": 5,
+        "n_pairs": 10,
         "mean_diff": 0.2,
-        "std_diff": 0.4472,
-        "t_stat": 1.0,
-        "p_value": 0.3739,
+        "std_diff": 0.1972,
+        "t_stat": 3.2071,
+        "p_value": 0.0107,
         "recommended_test": "Wilcoxon signed-rank",
-        "recommended_p_value": 1.0,
+        "recommended_p_value": 0.0312,
         "recommended_statistic": 0.0,
-        "normality_p_value": 0.0001,
-        "effect_size": 0.0,
+        "normality_p_value": 0.0251,
+        "effect_size": 0.8793,
         "effect_size_type": "matched-pairs rank-biserial r (approximate, from normal-approx Z)",
-        "sample_size": 5
-      },
-      "persona_consistency": {
-        "n_pairs": 5,
-        "mean_diff": 0.097,
-        "std_diff": 0.0,
-        "t_stat": Infinity,
-        "p_value": 0.0,
-        "recommended_test": "Wilcoxon signed-rank",
-        "recommended_p_value": 0.0625,
-        "recommended_statistic": 0.0,
-        "normality_p_value": 1.0,
-        "effect_size": 0.833,
-        "effect_size_type": "matched-pairs rank-biserial r (approximate, from normal-approx Z)",
-        "sample_size": 5
-      },
-      "educational_usefulness": {
-        "n_pairs": 0,
-        "mean_diff": "Not Evaluated",
-        "note": "fewer than 2 paired observations"
-      },
-      "grounding_shap": {
-        "n_pairs": 0,
-        "mean_diff": "Not Evaluated",
-        "note": "fewer than 2 paired observations"
-      },
-      "grounding_risk": {
-        "n_pairs": 0,
-        "mean_diff": "Not Evaluated",
-        "note": "fewer than 2 paired observations"
-      },
-      "grounding_cognitive": {
-        "n_pairs": 0,
-        "mean_diff": "Not Evaluated",
-        "note": "fewer than 2 paired observations"
-      },
-      "grounding_overall": {
-        "n_pairs": 0,
-        "mean_diff": "Not Evaluated",
-        "note": "fewer than 2 paired observations"
-      }
-    },
-    "Without Cognitive": {
-      "evidence_fusion_correctness": {
-        "n_pairs": 5,
-        "mean_diff": -0.15,
-        "std_diff": 0.1369,
-        "t_stat": -2.4495,
-        "p_value": 0.0705,
-        "recommended_test": "Wilcoxon signed-rank",
-        "recommended_p_value": 0.25,
-        "recommended_statistic": 0.0,
-        "normality_p_value": 0.0065,
-        "effect_size": -0.6642,
-        "effect_size_type": "matched-pairs rank-biserial r (approximate, from normal-approx Z)",
-        "sample_size": 5
+        "sample_size": 10
       },
       "priority_focus_correctness": {
-        "n_pairs": 5,
-        "mean_diff": -0.2,
-        "std_diff": 0.4472,
-        "t_stat": -1.0,
-        "p_value": 0.3739,
+        "n_pairs": 10,
+        "mean_diff": 0.6,
+        "std_diff": 0.5164,
+        "t_stat": 3.6742,
+        "p_value": 0.0051,
         "recommended_test": "Wilcoxon signed-rank",
-        "recommended_p_value": 1.0,
+        "recommended_p_value": 0.0312,
         "recommended_statistic": 0.0,
-        "normality_p_value": 0.0001,
-        "effect_size": -0.0,
+        "normality_p_value": 0.0002,
+        "effect_size": 0.8793,
         "effect_size_type": "matched-pairs rank-biserial r (approximate, from normal-approx Z)",
-        "sample_size": 5
+        "sample_size": 10
       },
       "recommendation_quality": {
-        "n_pairs": 5,
-        "mean_diff": 0.4,
-        "std_diff": 0.5477,
-        "t_stat": 1.633,
-        "p_value": 0.1778,
-        "recommended_test": "Wilcoxon signed-rank",
-        "recommended_p_value": 0.5,
-        "recommended_statistic": 0.0,
-        "normality_p_value": 0.0065,
-        "effect_size": 0.4769,
-        "effect_size_type": "matched-pairs rank-biserial r (approximate, from normal-approx Z)",
-        "sample_size": 5
-      },
-      "persona_consistency": {
-        "n_pairs": 5,
-        "mean_diff": 0.052,
-        "std_diff": 0.0,
-        "t_stat": Infinity,
-        "p_value": 0.0,
-        "recommended_test": "Wilcoxon signed-rank",
-        "recommended_p_value": 0.0625,
-        "recommended_statistic": 0.0,
-        "normality_p_value": 1.0,
-        "effect_size": 0.833,
-        "effect_size_type": "matched-pairs rank-biserial r (approximate, from normal-approx Z)",
-        "sample_size": 5
-      },
-      "educational_usefulness": {
-        "n_pairs": 0,
-        "mean_diff": "Not Evaluated",
-        "note": "fewer than 2 paired observations"
-      },
-      "grounding_shap": {
-        "n_pairs": 0,
-        "mean_diff": "Not Evaluated",
-        "note": "fewer than 2 paired observations"
-      },
-      "grounding_risk": {
-        "n_pairs": 0,
-        "mean_diff": "Not Evaluated",
-        "note": "fewer than 2 paired observations"
-      },
-      "grounding_cognitive": {
-        "n_pairs": 0,
-        "mean_diff": "Not Evaluated",
-        "note": "fewer than 2 paired observations"
-      },
-      "grounding_overall": {
-        "n_pairs": 0,
-        "mean_diff": "Not Evaluated",
-        "note": "fewer than 2 paired observations"
-      }
-    },
-    "Risk Only": {
-      "evidence_fusion_correctness": {
-        "n_pairs": 5,
-        "mean_diff": 0.1,
-        "std_diff": 0.3354,
-        "t_stat": 0.6667,
-        "p_value": 0.5415,
-        "recommended_test": "paired t-test",
-        "recommended_p_value": 0.5415,
-        "recommended_statistic": 0.6667,
-        "normality_p_value": 0.2006,
-        "effect_size": 0.2981,
-        "effect_size_type": "Cohen's d_z (mean paired diff / std of paired diffs)",
-        "sample_size": 5
-      },
-      "priority_focus_correctness": {
-        "n_pairs": 5,
-        "mean_diff": -0.4,
-        "std_diff": 0.5477,
-        "t_stat": -1.633,
-        "p_value": 0.1778,
-        "recommended_test": "Wilcoxon signed-rank",
-        "recommended_p_value": 0.5,
-        "recommended_statistic": 0.0,
-        "normality_p_value": 0.0065,
-        "effect_size": -0.4769,
-        "effect_size_type": "matched-pairs rank-biserial r (approximate, from normal-approx Z)",
-        "sample_size": 5
-      },
-      "recommendation_quality": {
-        "n_pairs": 5,
+        "n_pairs": 10,
         "mean_diff": 0.0,
-        "std_diff": 1.0,
+        "std_diff": 1.0541,
         "t_stat": 0.0,
         "p_value": 1.0,
         "recommended_test": "paired t-test",
         "recommended_p_value": 1.0,
         "recommended_statistic": 0.0,
-        "normality_p_value": 0.1185,
+        "normality_p_value": 0.0739,
         "effect_size": 0.0,
         "effect_size_type": "Cohen's d_z (mean paired diff / std of paired diffs)",
-        "sample_size": 5
+        "sample_size": 10
+      },
+      "persona_consistency": {
+        "n_pairs": 10,
+        "mean_diff": -0.4885,
+        "std_diff": 0.029,
+        "t_stat": -53.2909,
+        "p_value": 0.0,
+        "recommended_test": "Wilcoxon signed-rank",
+        "recommended_p_value": 0.002,
+        "recommended_statistic": 0.0,
+        "normality_p_value": 0.0003,
+        "effect_size": -0.9794,
+        "effect_size_type": "matched-pairs rank-biserial r (approximate, from normal-approx Z)",
+        "sample_size": 10
+      },
+      "educational_usefulness": {
+        "n_pairs": 0,
+        "mean_diff": "Not Evaluated",
+        "note": "fewer than 2 paired observations"
+      },
+      "grounding_shap": {
+        "n_pairs": 0,
+        "mean_diff": "Not Evaluated",
+        "note": "fewer than 2 paired observations"
+      },
+      "grounding_risk": {
+        "n_pairs": 0,
+        "mean_diff": "Not Evaluated",
+        "note": "fewer than 2 paired observations"
+      },
+      "grounding_cognitive": {
+        "n_pairs": 0,
+        "mean_diff": "Not Evaluated",
+        "note": "fewer than 2 paired observations"
+      },
+      "grounding_overall": {
+        "n_pairs": 0,
+        "mean_diff": "Not Evaluated",
+        "note": "fewer than 2 paired observations"
+      },
+      "bleu_score": {
+        "n_pairs": 10,
+        "mean_diff": 0.0089,
+        "std_diff": 0.0183,
+        "t_stat": 1.5496,
+        "p_value": 0.1557,
+        "recommended_test": "Wilcoxon signed-rank",
+        "recommended_p_value": 0.0098,
+        "recommended_statistic": 3.0,
+        "normality_p_value": 0.0,
+        "effect_size": 0.8171,
+        "effect_size_type": "matched-pairs rank-biserial r (approximate, from normal-approx Z)",
+        "sample_size": 10
+      },
+      "semantic_similarity": {
+        "n_pairs": 10,
+        "mean_diff": 0.3528,
+        "std_diff": 0.2076,
+        "t_stat": 5.376,
+        "p_value": 0.0004,
+        "recommended_test": "paired t-test",
+        "recommended_p_value": 0.0004,
+        "recommended_statistic": 5.376,
+        "normality_p_value": 0.8625,
+        "effect_size": 1.7,
+        "effect_size_type": "Cohen's d_z (mean paired diff / std of paired diffs)",
+        "sample_size": 10
+      }
+    },
+    "Without Persona": {
+      "evidence_fusion_correctness": {
+        "n_pairs": 10,
+        "mean_diff": 0.25,
+        "std_diff": 0.1667,
+        "t_stat": 4.7434,
+        "p_value": 0.0011,
+        "recommended_test": "Wilcoxon signed-rank",
+        "recommended_p_value": 0.0078,
+        "recommended_statistic": 0.0,
+        "normality_p_value": 0.0219,
+        "effect_size": 0.9405,
+        "effect_size_type": "matched-pairs rank-biserial r (approximate, from normal-approx Z)",
+        "sample_size": 10
+      },
+      "priority_focus_correctness": {
+        "n_pairs": 10,
+        "mean_diff": 0.5,
+        "std_diff": 0.527,
+        "t_stat": 3.0,
+        "p_value": 0.015,
+        "recommended_test": "Wilcoxon signed-rank",
+        "recommended_p_value": 0.0625,
+        "recommended_statistic": 0.0,
+        "normality_p_value": 0.0003,
+        "effect_size": 0.833,
+        "effect_size_type": "matched-pairs rank-biserial r (approximate, from normal-approx Z)",
+        "sample_size": 10
+      },
+      "recommendation_quality": {
+        "n_pairs": 10,
+        "mean_diff": 1.0,
+        "std_diff": 0.4714,
+        "t_stat": 6.7082,
+        "p_value": 0.0001,
+        "recommended_test": "Wilcoxon signed-rank",
+        "recommended_p_value": 0.0039,
+        "recommended_statistic": 0.0,
+        "normality_p_value": 0.0003,
+        "effect_size": 0.9619,
+        "effect_size_type": "matched-pairs rank-biserial r (approximate, from normal-approx Z)",
+        "sample_size": 10
       },
       "persona_consistency": {
         "n_pairs": 0,
@@ -963,6 +969,591 @@
         "n_pairs": 0,
         "mean_diff": "Not Evaluated",
         "note": "fewer than 2 paired observations"
+      },
+      "bleu_score": {
+        "n_pairs": 10,
+        "mean_diff": 0.0045,
+        "std_diff": 0.0029,
+        "t_stat": 4.9455,
+        "p_value": 0.0008,
+        "recommended_test": "paired t-test",
+        "recommended_p_value": 0.0008,
+        "recommended_statistic": 4.9455,
+        "normality_p_value": 0.5187,
+        "effect_size": 1.5639,
+        "effect_size_type": "Cohen's d_z (mean paired diff / std of paired diffs)",
+        "sample_size": 10
+      },
+      "semantic_similarity": {
+        "n_pairs": 10,
+        "mean_diff": 0.3254,
+        "std_diff": 0.2238,
+        "t_stat": 4.5984,
+        "p_value": 0.0013,
+        "recommended_test": "paired t-test",
+        "recommended_p_value": 0.0013,
+        "recommended_statistic": 4.5984,
+        "normality_p_value": 0.1482,
+        "effect_size": 1.4541,
+        "effect_size_type": "Cohen's d_z (mean paired diff / std of paired diffs)",
+        "sample_size": 10
+      }
+    },
+    "Without SHAP": {
+      "evidence_fusion_correctness": {
+        "n_pairs": 10,
+        "mean_diff": 0.2,
+        "std_diff": 0.2582,
+        "t_stat": 2.4495,
+        "p_value": 0.0368,
+        "recommended_test": "Wilcoxon signed-rank",
+        "recommended_p_value": 0.0625,
+        "recommended_statistic": 0.0,
+        "normality_p_value": 0.0114,
+        "effect_size": 0.833,
+        "effect_size_type": "matched-pairs rank-biserial r (approximate, from normal-approx Z)",
+        "sample_size": 10
+      },
+      "priority_focus_correctness": {
+        "n_pairs": 10,
+        "mean_diff": 0.4,
+        "std_diff": 0.5164,
+        "t_stat": 2.4495,
+        "p_value": 0.0368,
+        "recommended_test": "Wilcoxon signed-rank",
+        "recommended_p_value": 0.125,
+        "recommended_statistic": 0.0,
+        "normality_p_value": 0.0002,
+        "effect_size": 0.7671,
+        "effect_size_type": "matched-pairs rank-biserial r (approximate, from normal-approx Z)",
+        "sample_size": 10
+      },
+      "recommendation_quality": {
+        "n_pairs": 10,
+        "mean_diff": -0.2,
+        "std_diff": 0.6325,
+        "t_stat": -1.0,
+        "p_value": 0.3434,
+        "recommended_test": "Wilcoxon signed-rank",
+        "recommended_p_value": 0.625,
+        "recommended_statistic": 2.5,
+        "normality_p_value": 0.0123,
+        "effect_size": -0.2444,
+        "effect_size_type": "matched-pairs rank-biserial r (approximate, from normal-approx Z)",
+        "sample_size": 10
+      },
+      "persona_consistency": {
+        "n_pairs": 10,
+        "mean_diff": -0.4875,
+        "std_diff": 0.0111,
+        "t_stat": -139.2857,
+        "p_value": 0.0,
+        "recommended_test": "Wilcoxon signed-rank",
+        "recommended_p_value": 0.002,
+        "recommended_statistic": 0.0,
+        "normality_p_value": 0.0003,
+        "effect_size": -0.9794,
+        "effect_size_type": "matched-pairs rank-biserial r (approximate, from normal-approx Z)",
+        "sample_size": 10
+      },
+      "educational_usefulness": {
+        "n_pairs": 0,
+        "mean_diff": "Not Evaluated",
+        "note": "fewer than 2 paired observations"
+      },
+      "grounding_shap": {
+        "n_pairs": 0,
+        "mean_diff": "Not Evaluated",
+        "note": "fewer than 2 paired observations"
+      },
+      "grounding_risk": {
+        "n_pairs": 0,
+        "mean_diff": "Not Evaluated",
+        "note": "fewer than 2 paired observations"
+      },
+      "grounding_cognitive": {
+        "n_pairs": 0,
+        "mean_diff": "Not Evaluated",
+        "note": "fewer than 2 paired observations"
+      },
+      "grounding_overall": {
+        "n_pairs": 0,
+        "mean_diff": "Not Evaluated",
+        "note": "fewer than 2 paired observations"
+      },
+      "bleu_score": {
+        "n_pairs": 10,
+        "mean_diff": 0.0039,
+        "std_diff": 0.0024,
+        "t_stat": 5.0986,
+        "p_value": 0.0006,
+        "recommended_test": "paired t-test",
+        "recommended_p_value": 0.0006,
+        "recommended_statistic": 5.0986,
+        "normality_p_value": 0.9334,
+        "effect_size": 1.6123,
+        "effect_size_type": "Cohen's d_z (mean paired diff / std of paired diffs)",
+        "sample_size": 10
+      },
+      "semantic_similarity": {
+        "n_pairs": 10,
+        "mean_diff": 0.3272,
+        "std_diff": 0.2021,
+        "t_stat": 5.1194,
+        "p_value": 0.0006,
+        "recommended_test": "paired t-test",
+        "recommended_p_value": 0.0006,
+        "recommended_statistic": 5.1194,
+        "normality_p_value": 0.1932,
+        "effect_size": 1.6189,
+        "effect_size_type": "Cohen's d_z (mean paired diff / std of paired diffs)",
+        "sample_size": 10
+      }
+    },
+    "Without Cognitive": {
+      "evidence_fusion_correctness": {
+        "n_pairs": 10,
+        "mean_diff": 0.05,
+        "std_diff": 0.1054,
+        "t_stat": 1.5,
+        "p_value": 0.1679,
+        "recommended_test": "Wilcoxon signed-rank",
+        "recommended_p_value": 0.5,
+        "recommended_statistic": 0.0,
+        "normality_p_value": 0.0,
+        "effect_size": 0.4769,
+        "effect_size_type": "matched-pairs rank-biserial r (approximate, from normal-approx Z)",
+        "sample_size": 10
+      },
+      "priority_focus_correctness": {
+        "n_pairs": 10,
+        "mean_diff": 0.5,
+        "std_diff": 0.527,
+        "t_stat": 3.0,
+        "p_value": 0.015,
+        "recommended_test": "Wilcoxon signed-rank",
+        "recommended_p_value": 0.0625,
+        "recommended_statistic": 0.0,
+        "normality_p_value": 0.0003,
+        "effect_size": 0.833,
+        "effect_size_type": "matched-pairs rank-biserial r (approximate, from normal-approx Z)",
+        "sample_size": 10
+      },
+      "recommendation_quality": {
+        "n_pairs": 10,
+        "mean_diff": 0.1,
+        "std_diff": 0.8756,
+        "t_stat": 0.3612,
+        "p_value": 0.7263,
+        "recommended_test": "Wilcoxon signed-rank",
+        "recommended_p_value": 1.0,
+        "recommended_statistic": 12.0,
+        "normality_p_value": 0.0167,
+        "effect_size": 0.0,
+        "effect_size_type": "matched-pairs rank-biserial r (approximate, from normal-approx Z)",
+        "sample_size": 10
+      },
+      "persona_consistency": {
+        "n_pairs": 10,
+        "mean_diff": -0.497,
+        "std_diff": 0.0253,
+        "t_stat": -62.125,
+        "p_value": 0.0,
+        "recommended_test": "Wilcoxon signed-rank",
+        "recommended_p_value": 0.002,
+        "recommended_statistic": 0.0,
+        "normality_p_value": 0.0003,
+        "effect_size": -0.9794,
+        "effect_size_type": "matched-pairs rank-biserial r (approximate, from normal-approx Z)",
+        "sample_size": 10
+      },
+      "educational_usefulness": {
+        "n_pairs": 0,
+        "mean_diff": "Not Evaluated",
+        "note": "fewer than 2 paired observations"
+      },
+      "grounding_shap": {
+        "n_pairs": 0,
+        "mean_diff": "Not Evaluated",
+        "note": "fewer than 2 paired observations"
+      },
+      "grounding_risk": {
+        "n_pairs": 0,
+        "mean_diff": "Not Evaluated",
+        "note": "fewer than 2 paired observations"
+      },
+      "grounding_cognitive": {
+        "n_pairs": 0,
+        "mean_diff": "Not Evaluated",
+        "note": "fewer than 2 paired observations"
+      },
+      "grounding_overall": {
+        "n_pairs": 0,
+        "mean_diff": "Not Evaluated",
+        "note": "fewer than 2 paired observations"
+      },
+      "bleu_score": {
+        "n_pairs": 10,
+        "mean_diff": 0.0039,
+        "std_diff": 0.0034,
+        "t_stat": 3.651,
+        "p_value": 0.0053,
+        "recommended_test": "paired t-test",
+        "recommended_p_value": 0.0053,
+        "recommended_statistic": 3.651,
+        "normality_p_value": 0.074,
+        "effect_size": 1.1545,
+        "effect_size_type": "Cohen's d_z (mean paired diff / std of paired diffs)",
+        "sample_size": 10
+      },
+      "semantic_similarity": {
+        "n_pairs": 10,
+        "mean_diff": 0.3413,
+        "std_diff": 0.1931,
+        "t_stat": 5.5873,
+        "p_value": 0.0003,
+        "recommended_test": "paired t-test",
+        "recommended_p_value": 0.0003,
+        "recommended_statistic": 5.5873,
+        "normality_p_value": 0.924,
+        "effect_size": 1.7669,
+        "effect_size_type": "Cohen's d_z (mean paired diff / std of paired diffs)",
+        "sample_size": 10
+      }
+    },
+    "Risk Only": {
+      "evidence_fusion_correctness": {
+        "n_pairs": 10,
+        "mean_diff": 0.25,
+        "std_diff": 0.2635,
+        "t_stat": 3.0,
+        "p_value": 0.015,
+        "recommended_test": "Wilcoxon signed-rank",
+        "recommended_p_value": 0.0625,
+        "recommended_statistic": 0.0,
+        "normality_p_value": 0.0003,
+        "effect_size": 0.833,
+        "effect_size_type": "matched-pairs rank-biserial r (approximate, from normal-approx Z)",
+        "sample_size": 10
+      },
+      "priority_focus_correctness": {
+        "n_pairs": 10,
+        "mean_diff": 0.6,
+        "std_diff": 0.5164,
+        "t_stat": 3.6742,
+        "p_value": 0.0051,
+        "recommended_test": "Wilcoxon signed-rank",
+        "recommended_p_value": 0.0312,
+        "recommended_statistic": 0.0,
+        "normality_p_value": 0.0002,
+        "effect_size": 0.8793,
+        "effect_size_type": "matched-pairs rank-biserial r (approximate, from normal-approx Z)",
+        "sample_size": 10
+      },
+      "recommendation_quality": {
+        "n_pairs": 10,
+        "mean_diff": 0.5,
+        "std_diff": 0.7071,
+        "t_stat": 2.2361,
+        "p_value": 0.0522,
+        "recommended_test": "Wilcoxon signed-rank",
+        "recommended_p_value": 0.125,
+        "recommended_statistic": 4.0,
+        "normality_p_value": 0.0021,
+        "effect_size": 0.5798,
+        "effect_size_type": "matched-pairs rank-biserial r (approximate, from normal-approx Z)",
+        "sample_size": 10
+      },
+      "persona_consistency": {
+        "n_pairs": 0,
+        "mean_diff": "Not Evaluated",
+        "note": "fewer than 2 paired observations"
+      },
+      "educational_usefulness": {
+        "n_pairs": 0,
+        "mean_diff": "Not Evaluated",
+        "note": "fewer than 2 paired observations"
+      },
+      "grounding_shap": {
+        "n_pairs": 0,
+        "mean_diff": "Not Evaluated",
+        "note": "fewer than 2 paired observations"
+      },
+      "grounding_risk": {
+        "n_pairs": 0,
+        "mean_diff": "Not Evaluated",
+        "note": "fewer than 2 paired observations"
+      },
+      "grounding_cognitive": {
+        "n_pairs": 0,
+        "mean_diff": "Not Evaluated",
+        "note": "fewer than 2 paired observations"
+      },
+      "grounding_overall": {
+        "n_pairs": 0,
+        "mean_diff": "Not Evaluated",
+        "note": "fewer than 2 paired observations"
+      },
+      "bleu_score": {
+        "n_pairs": 10,
+        "mean_diff": 0.0069,
+        "std_diff": 0.0052,
+        "t_stat": 4.2355,
+        "p_value": 0.0022,
+        "recommended_test": "paired t-test",
+        "recommended_p_value": 0.0022,
+        "recommended_statistic": 4.2355,
+        "normality_p_value": 0.0952,
+        "effect_size": 1.3394,
+        "effect_size_type": "Cohen's d_z (mean paired diff / std of paired diffs)",
+        "sample_size": 10
+      },
+      "semantic_similarity": {
+        "n_pairs": 10,
+        "mean_diff": 0.354,
+        "std_diff": 0.2084,
+        "t_stat": 5.3713,
+        "p_value": 0.0004,
+        "recommended_test": "Wilcoxon signed-rank",
+        "recommended_p_value": 0.0039,
+        "recommended_statistic": 1.0,
+        "normality_p_value": 0.0359,
+        "effect_size": 0.9125,
+        "effect_size_type": "matched-pairs rank-biserial r (approximate, from normal-approx Z)",
+        "sample_size": 10
+      }
+    },
+    "LLM Only": {
+      "evidence_fusion_correctness": {
+        "n_pairs": 0,
+        "mean_diff": "Not Evaluated",
+        "note": "fewer than 2 paired observations"
+      },
+      "priority_focus_correctness": {
+        "n_pairs": 0,
+        "mean_diff": "Not Evaluated",
+        "note": "fewer than 2 paired observations"
+      },
+      "recommendation_quality": {
+        "n_pairs": 10,
+        "mean_diff": 0.0,
+        "std_diff": 0.0,
+        "t_stat": NaN,
+        "p_value": NaN,
+        "recommended_test": "Wilcoxon signed-rank",
+        "recommended_p_value": "Not Evaluated",
+        "recommended_statistic": "Not Evaluated",
+        "normality_p_value": 1.0,
+        "effect_size": "Not Evaluated",
+        "effect_size_type": "Not Evaluated",
+        "sample_size": 10,
+        "stat_note": "all paired differences are exactly zero; Wilcoxon not computable"
+      },
+      "persona_consistency": {
+        "n_pairs": 0,
+        "mean_diff": "Not Evaluated",
+        "note": "fewer than 2 paired observations"
+      },
+      "educational_usefulness": {
+        "n_pairs": 0,
+        "mean_diff": "Not Evaluated",
+        "note": "fewer than 2 paired observations"
+      },
+      "grounding_shap": {
+        "n_pairs": 0,
+        "mean_diff": "Not Evaluated",
+        "note": "fewer than 2 paired observations"
+      },
+      "grounding_risk": {
+        "n_pairs": 0,
+        "mean_diff": "Not Evaluated",
+        "note": "fewer than 2 paired observations"
+      },
+      "grounding_cognitive": {
+        "n_pairs": 0,
+        "mean_diff": "Not Evaluated",
+        "note": "fewer than 2 paired observations"
+      },
+      "grounding_overall": {
+        "n_pairs": 0,
+        "mean_diff": "Not Evaluated",
+        "note": "fewer than 2 paired observations"
+      },
+      "bleu_score": {
+        "n_pairs": 10,
+        "mean_diff": 0.0047,
+        "std_diff": 0.0027,
+        "t_stat": 5.4765,
+        "p_value": 0.0004,
+        "recommended_test": "paired t-test",
+        "recommended_p_value": 0.0004,
+        "recommended_statistic": 5.4765,
+        "normality_p_value": 0.6302,
+        "effect_size": 1.7318,
+        "effect_size_type": "Cohen's d_z (mean paired diff / std of paired diffs)",
+        "sample_size": 10
+      },
+      "semantic_similarity": {
+        "n_pairs": 10,
+        "mean_diff": 0.4555,
+        "std_diff": 0.2267,
+        "t_stat": 6.3537,
+        "p_value": 0.0001,
+        "recommended_test": "paired t-test",
+        "recommended_p_value": 0.0001,
+        "recommended_statistic": 6.3537,
+        "normality_p_value": 0.3907,
+        "effect_size": 2.0092,
+        "effect_size_type": "Cohen's d_z (mean paired diff / std of paired diffs)",
+        "sample_size": 10
+      }
+    }
+  },
+  "bleu_semantic_extended": {
+    "overall": {
+      "bleu_score": {
+        "n": 70,
+        "mean": 0.0051,
+        "median": 0.004,
+        "std": 0.0074,
+        "min": 0.0,
+        "max": 0.0603
+      },
+      "semantic_similarity": {
+        "n": 70,
+        "mean": 0.4005,
+        "median": 0.4315,
+        "std": 0.198,
+        "min": 0.0096,
+        "max": 0.7369
+      }
+    },
+    "per_config": {
+      "Full System": {
+        "bleu_score": {
+          "n": 10,
+          "mean": 0.0004,
+          "median": 0.0,
+          "std": 0.0008,
+          "min": 0.0,
+          "max": 0.002
+        },
+        "semantic_similarity": {
+          "n": 10,
+          "mean": 0.0925,
+          "median": 0.0394,
+          "std": 0.1048,
+          "min": 0.0096,
+          "max": 0.3398
+        }
+      },
+      "Without Retrieval": {
+        "bleu_score": {
+          "n": 10,
+          "mean": 0.0093,
+          "median": 0.0039,
+          "std": 0.0181,
+          "min": 0.0011,
+          "max": 0.0603
+        },
+        "semantic_similarity": {
+          "n": 10,
+          "mean": 0.4453,
+          "median": 0.442,
+          "std": 0.1624,
+          "min": 0.2221,
+          "max": 0.6505
+        }
+      },
+      "Without Persona": {
+        "bleu_score": {
+          "n": 10,
+          "mean": 0.0049,
+          "median": 0.0042,
+          "std": 0.0023,
+          "min": 0.0011,
+          "max": 0.008
+        },
+        "semantic_similarity": {
+          "n": 10,
+          "mean": 0.4178,
+          "median": 0.4149,
+          "std": 0.189,
+          "min": 0.0976,
+          "max": 0.7061
+        }
+      },
+      "Without SHAP": {
+        "bleu_score": {
+          "n": 10,
+          "mean": 0.0042,
+          "median": 0.004,
+          "std": 0.0019,
+          "min": 0.0011,
+          "max": 0.0081
+        },
+        "semantic_similarity": {
+          "n": 10,
+          "mean": 0.4197,
+          "median": 0.4579,
+          "std": 0.1526,
+          "min": 0.0658,
+          "max": 0.6212
+        }
+      },
+      "Without Cognitive": {
+        "bleu_score": {
+          "n": 10,
+          "mean": 0.0043,
+          "median": 0.004,
+          "std": 0.0028,
+          "min": 0.0011,
+          "max": 0.0112
+        },
+        "semantic_similarity": {
+          "n": 10,
+          "mean": 0.4338,
+          "median": 0.4153,
+          "std": 0.1526,
+          "min": 0.2185,
+          "max": 0.6555
+        }
+      },
+      "Risk Only": {
+        "bleu_score": {
+          "n": 10,
+          "mean": 0.0073,
+          "median": 0.0063,
+          "std": 0.0049,
+          "min": 0.0026,
+          "max": 0.0191
+        },
+        "semantic_similarity": {
+          "n": 10,
+          "mean": 0.4465,
+          "median": 0.4584,
+          "std": 0.1511,
+          "min": 0.2028,
+          "max": 0.6571
+        }
+      },
+      "LLM Only": {
+        "bleu_score": {
+          "n": 10,
+          "mean": 0.0051,
+          "median": 0.0048,
+          "std": 0.0022,
+          "min": 0.0014,
+          "max": 0.0082
+        },
+        "semantic_similarity": {
+          "n": 10,
+          "mean": 0.548,
+          "median": 0.5693,
+          "std": 0.1475,
+          "min": 0.3104,
+          "max": 0.7369
+        }
       }
     }
   }

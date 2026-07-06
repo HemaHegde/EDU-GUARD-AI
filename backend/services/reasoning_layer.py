@@ -36,6 +36,19 @@ WHAT'S IMPLEMENTED HERE
    from chat_history)     -> derive_persona_memory()
 5. Persona-varied
    few-shot bank          -> get_few_shot_example()
+6. Retrieval Safety
+   Classification
+   (Sprint 8 addition)    -> classify_retrieval_safety()
+
+SPRINT 8 UPDATE (HALLUCINATION SAFETY HARDENING):
+Adds item 6 above, `classify_retrieval_safety()`, a pure function that
+turns retrieval-quality numbers already computed by retrieval.py
+(similarity) and confidence.py (normalized confidence, contradiction
+detection) into one of SAFE / UNCERTAIN / NEEDS_REVIEW for API
+consumers and educator-review tooling. It takes only primitives as
+arguments (no StudentContext, no cross-module imports), preserving
+this module's existing "dependency-light function library" design.
+Nothing else in this file was changed by Sprint 8.
 
 Item 5 ("Response Templates per Persona") from the improvement brief
 is intentionally NOT a separate template dict here — it already exists
@@ -482,3 +495,78 @@ _DEFAULT_FEW_SHOT = (
 def get_few_shot_example(persona: str) -> str:
     """Pure lookup — no computation, no fabrication."""
     return _FEW_SHOT_BANK.get(persona, _DEFAULT_FEW_SHOT)
+
+
+# =========================================================
+# 6. RETRIEVAL SAFETY CLASSIFICATION (SPRINT 8 ADDITION)
+# =========================================================
+# Hallucination Safety Hardening requirement: "Reasoning Layer — return
+# one of SAFE / UNCERTAIN / NEEDS_REVIEW based on retrieval quality."
+#
+# This is deliberately a PURE function over primitives (not
+# StudentContext, not a ConfidenceResult object) so this module stays
+# the dependency-light function library described in the module
+# docstring above — it does not need to import confidence.py or
+# context_builder.py's retrieval-specific fields to do this
+# classification; the caller (mentor_service.py) already has the three
+# numbers this needs and passes them in directly.
+#
+# The three inputs are all ALREADY COMPUTED elsewhere:
+#   - `max_similarity` comes straight from retrieval.py's per-chunk
+#     `similarity_score` values (the strongest one seen this turn).
+#   - `normalized_confidence` comes from confidence.py's
+#     `ConfidenceResult.normalized_score`.
+#   - `contradiction_detected` comes from confidence.py's
+#     `ConfidenceResult.contradiction_detected`.
+# This function only combines them into one categorical label; it does
+# not recompute or reinterpret any of them.
+
+# How far above the raw thresholds a value must sit before we call it
+# fully SAFE rather than UNCERTAIN. A response that clears the bar by
+# only a hair is still worth flagging as borderline rather than fully
+# trusted — this margin is a heuristic tuning knob, not a statistical
+# guarantee.
+_SAFETY_MARGIN = 0.15
+
+
+def classify_retrieval_safety(
+    max_similarity: float,
+    normalized_confidence: float,
+    contradiction_detected: bool,
+    similarity_threshold: float,
+    confidence_threshold: float,
+) -> str:
+    """
+    Returns one of "SAFE", "UNCERTAIN", "NEEDS_REVIEW":
+
+      NEEDS_REVIEW - max_similarity is below similarity_threshold, OR
+                     normalized_confidence is below confidence_threshold,
+                     OR the retrieved evidence was flagged as
+                     contradictory. This mirrors (and is consistent
+                     with) confidence.py's own `needs_human_review`
+                     logic, expressed here as a label rather than a
+                     boolean so it can be surfaced to API consumers
+                     alongside SAFE/UNCERTAIN as a three-way status.
+
+      UNCERTAIN    - clears both thresholds, but only within
+                     `_SAFETY_MARGIN` of one of them — evidence is
+                     technically sufficient but thin enough that a
+                     human reviewer may still want to spot-check it.
+
+      SAFE         - comfortably clears both thresholds with no
+                     contradiction detected.
+    """
+    if (
+        max_similarity < similarity_threshold
+        or normalized_confidence < confidence_threshold
+        or contradiction_detected
+    ):
+        return "NEEDS_REVIEW"
+
+    similarity_borderline = max_similarity < similarity_threshold * (1 + _SAFETY_MARGIN)
+    confidence_borderline = normalized_confidence < confidence_threshold * (1 + _SAFETY_MARGIN)
+
+    if similarity_borderline or confidence_borderline:
+        return "UNCERTAIN"
+
+    return "SAFE"

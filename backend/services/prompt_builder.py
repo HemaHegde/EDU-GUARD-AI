@@ -90,6 +90,37 @@ that the deterministic fallback recommendations (used when the LLM
 misses the structured markers) reason about evidence the *same* way
 the prompt does — keeping LLM-authored and fallback-authored
 recommendations consistent with each other.
+
+SPRINT 8 UPDATE (HALLUCINATION SAFETY HARDENING):
+Three additive changes, none of which touch existing sections, the
+priority-focus/evidence-fusion/conversation-plan logic, persona
+mapping, or `build_system_prompt`'s existing section order up through
+`_section_response_instructions`:
+
+  1. `_section_learning_material` now renders each retrieved chunk's
+     `source`, `chunk_id`, and `similarity_score` (all already
+     computed by retrieval.py -- nothing new is calculated here) inline
+     with the chunk text, and instructs the model to cite ONLY those
+     exact source names. This directly supports the Evidence Citations
+     and Retrieval Safety requirements.
+  2. A new `select_chunks_for_prompt()` public helper factors out the
+     "which chunks actually get shown to the LLM" slicing logic that
+     used to live only inside `_section_learning_material`.
+     mentor_service.py imports this so the "Sources:" list it appends
+     to every answer matches EXACTLY what the model was shown -- never
+     a larger or different set than what actually grounded the answer.
+  3. A new `_section_hallucination_safety()` section is appended to
+     `build_system_prompt`'s section list (after Learning Material,
+     before the final Response Instructions) with an explicit,
+     mandatory instruction: never fabricate, never answer outside the
+     retrieved evidence for content questions, and say "I don't know"
+     / defer to the fixed insufficient-evidence message when evidence
+     is thin. This is a defense-in-depth prompt-level backstop --
+     mentor_service.py's SIMILARITY_THRESHOLD gate already prevents the
+     LLM from being called at all when evidence is clearly too weak;
+     this section covers the borderline cases where the LLM is still
+     called but should still decline to speculate on any part of the
+     question the retrieved material doesn't actually cover.
 """
 
 from typing import List, Dict
@@ -644,21 +675,72 @@ def _section_cognitive_intelligence(context: StudentContext) -> str:
     )
 
 
+def select_chunks_for_prompt(retrieved_chunks: List[Dict[str, str]]) -> List[Dict[str, str]]:
+    """
+    SPRINT 8 ADDITION. Returns exactly the chunks (and only those) that
+    _section_learning_material will render into the prompt. Factored
+    out into a public function so mentor_service.py can build its
+    "Sources:" citation list from the SAME slice the model actually
+    saw, rather than re-deriving (and risking disagreement with) the
+    cap applied here. Pure slicing -- no ranking, filtering, or scoring
+    logic is added; retrieved_chunks is already ranked by
+    retriever.retrieve() (untouched).
+    """
+    return retrieved_chunks[:_MAX_CHUNKS_IN_PROMPT]
+
+
+def _format_retrieved_chunk_line(item: Dict[str, str]) -> str:
+    """
+    SPRINT 8 ADDITION. Renders one retrieved chunk with its citation
+    metadata inline, so the LLM can (a) ground its answer in the
+    excerpt text and (b) name the correct source when citing evidence,
+    using ONLY source names it was actually shown here -- never a
+    source it invents. source, chunk_id, and similarity_score are
+    all fields retrieval.py already attaches to each chunk; nothing is
+    computed here beyond formatting and the existing per-chunk
+    character cap.
+    """
+    chunk_text = item.get("chunk", "")[:_MAX_CHARS_PER_CHUNK]
+    source = item.get("source") or item.get("topic") or "unknown source"
+    chunk_id = item.get("chunk_id", "unknown")
+    similarity = item.get("similarity_score")
+    similarity_str = f"{similarity:.2f}" if isinstance(similarity, (int, float)) else "n/a"
+    return f"[source: {source} | id: {chunk_id} | similarity: {similarity_str}] {chunk_text}"
+
+
 def _section_learning_material(retrieved_chunks: List[Dict[str, str]]) -> str:
     """
     goal #4: use only the most relevant retrieved chunks instead of
-    concatenating all of them. `retrieved_chunks` is already ranked by
-    relevance by retriever.retrieve() (untouched, unchanged) — this
+    concatenating all of them. retrieved_chunks is already ranked by
+    relevance by retriever.retrieve() (untouched, unchanged) -- this
     function only limits how many of those already-ranked chunks, and
     how much of each, get embedded into the prompt text.
+
+    SPRINT 8 UPDATE (Evidence Citations / Retrieval Safety): each
+    rendered chunk now carries its source name, chunk id, and
+    similarity score inline (see _format_retrieved_chunk_line), and
+    the section explicitly instructs the model to cite ONLY the exact
+    source names shown here, and to say so plainly rather than answer
+    from outside knowledge if these excerpts don't cover the question.
+    The chunk selection itself (select_chunks_for_prompt) and the
+    existing character caps are unchanged from before.
     """
     if not retrieved_chunks:
-        return "Learning material: none retrieved for this query."
+        return (
+            "Learning material: none retrieved for this query. Do not "
+            "answer content questions from outside knowledge -- say "
+            "plainly that no matching material was found."
+        )
 
-    top_chunks = retrieved_chunks[:_MAX_CHUNKS_IN_PROMPT]
-    trimmed_pieces = [item["chunk"][:_MAX_CHARS_PER_CHUNK] for item in top_chunks]
-    combined = " ".join(trimmed_pieces)[:_MAX_TOTAL_MATERIAL_CHARS]
-    return f"Learning material: {combined}"
+    top_chunks = select_chunks_for_prompt(retrieved_chunks)
+    lines = [_format_retrieved_chunk_line(item) for item in top_chunks]
+    combined = " ".join(lines)[:_MAX_TOTAL_MATERIAL_CHARS]
+    return (
+        "Learning material (cite ONLY these exact source names when "
+        "referencing course content; if they do not contain the "
+        "answer, say so instead of using outside knowledge): "
+        f"{combined}"
+    )
 
 
 def _section_conversation_history(chat_history: str) -> str:
@@ -826,6 +908,44 @@ def _section_confidence_weighting(context: StudentContext) -> str:
     )
 
 
+def _section_hallucination_safety() -> str:
+    """
+    SPRINT 8 ADDITION (Hallucination Safety Hardening). A dedicated,
+    high-salience section placed right after the raw evidence sections
+    (Learning Material included) and before the final Response
+    Instructions, restating -- as an explicit, mandatory rule rather
+    than an implicit expectation -- the core hallucination-safety
+    contract: never fabricate, never answer content questions from
+    outside the retrieved evidence, and say so plainly when evidence is
+    thin instead of guessing.
+
+    This is a defense-in-depth backstop, not the primary safety
+    mechanism: mentor_service.py's SIMILARITY_THRESHOLD gate already
+    prevents the LLM from being called at all when the retrieved
+    material is clearly too weak to answer from (Req: Similarity
+    Threshold). This section covers the remaining case where the LLM
+    IS called (evidence cleared the threshold) but the student's
+    specific question may still reach beyond what the retrieved
+    excerpts actually cover.
+    """
+    return (
+        "HALLUCINATION SAFETY (mandatory, overrides stylistic "
+        "instructions if they ever conflict): Never invent facts, "
+        "statistics, quotes, or sources. For any question about course "
+        "content, answer ONLY from the Learning material excerpts "
+        "above and cite them by their exact source name; never invent "
+        "a source name that was not shown to you. If the excerpts do "
+        "not contain the answer, say so plainly (e.g. 'I don't know' "
+        "or 'Insufficient evidence was retrieved to answer this "
+        "question reliably.') instead of guessing. General "
+        "conversation, motivation, or study-skills questions that do "
+        "not depend on specific course content are not subject to this "
+        "citation requirement, but must still never state a specific "
+        "fact about this student (risk, persona, cognitive state) that "
+        "was not explicitly provided above."
+    )
+
+
 def _section_response_instructions() -> str:
     # goal #2 + #3 (Sprint 3), further compressed in Sprint 4 to target
     # ~250-300 characters. Every distinct constraint from the original
@@ -897,7 +1017,9 @@ def _section_response_instructions() -> str:
         "question type; stay concise; keep recs evidence-based or say "
         "evidence is thin. You MUST output all three section markers "
         "below, exactly as given, every time — do not omit or rename "
-        "them."
+        "them. Per HALLUCINATION SAFETY above: never fabricate a fact, "
+        "statistic, or source, and never answer a course-content "
+        "question beyond what the Learning material excerpts support."
     )
 
 
@@ -929,6 +1051,7 @@ _DEBUG_SECTION_LABELS = [
     "Conversation Plan",     # Sprint 7
     "Continuity",            # Sprint 7
     "Confidence Weighting",  # Sprint 7
+    "Hallucination Safety",  # Sprint 8
     "Instructions",
 ]
 
@@ -969,6 +1092,14 @@ def build_system_prompt(
     function and its return value are unchanged; this is purely to
     avoid recomputing the same deterministic result multiple times
     per prompt build.
+
+    SPRINT 8 ADDITION: `_section_hallucination_safety()` is appended
+    immediately after `_section_confidence_weighting` and before
+    `_section_response_instructions` -- same "synthesis section
+    benefits from recency" placement rationale as Sprint 6/7's
+    sections. It takes no arguments and reads no context, so it is
+    inserted without needing any new value threaded through this
+    function.
     """
 
     focus = determine_priority_focus(context)
@@ -987,6 +1118,7 @@ def build_system_prompt(
         _section_conversation_plan(context, focus),
         _section_continuity(context),
         _section_confidence_weighting(context),
+        _section_hallucination_safety(),
         _section_response_instructions(),
     ]
 

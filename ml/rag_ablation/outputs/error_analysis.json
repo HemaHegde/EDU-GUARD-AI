@@ -1,82 +1,93 @@
 {
   "per_config": {
     "Full System": {
-      "n_records": 5,
+      "n_records": 10,
       "n_failed": 0,
       "failure_rate": 0.0,
       "parser_fallback_frequency": "Not Evaluated",
       "n_parse_mode_observed": 0,
       "structured_response_compliance_rate": "Not Evaluated",
-      "average_response_length_chars": 283.2,
-      "n_response_length_observed": 5,
+      "average_response_length_chars": 92.0,
+      "n_response_length_observed": 10,
       "confidence_distribution": {
-        "High": 5
+        "High": 10
       }
     },
     "Without Retrieval": {
-      "n_records": 5,
+      "n_records": 10,
       "n_failed": 0,
       "failure_rate": 0.0,
       "parser_fallback_frequency": 0.0,
-      "n_parse_mode_observed": 5,
+      "n_parse_mode_observed": 10,
       "structured_response_compliance_rate": 1.0,
-      "average_response_length_chars": 343.4,
-      "n_response_length_observed": 5,
+      "average_response_length_chars": 234.5,
+      "n_response_length_observed": 10,
       "confidence_distribution": {
-        "High": 5
+        "High": 10
       }
     },
     "Without Persona": {
-      "n_records": 5,
+      "n_records": 10,
       "n_failed": 0,
       "failure_rate": 0.0,
       "parser_fallback_frequency": 0.0,
-      "n_parse_mode_observed": 5,
+      "n_parse_mode_observed": 10,
       "structured_response_compliance_rate": 1.0,
-      "average_response_length_chars": 338.2,
-      "n_response_length_observed": 5,
+      "average_response_length_chars": 335.1,
+      "n_response_length_observed": 10,
       "confidence_distribution": {
-        "Low": 5
+        "Low": 10
       }
     },
     "Without SHAP": {
-      "n_records": 5,
+      "n_records": 10,
       "n_failed": 0,
       "failure_rate": 0.0,
       "parser_fallback_frequency": 0.0,
-      "n_parse_mode_observed": 5,
+      "n_parse_mode_observed": 10,
       "structured_response_compliance_rate": 1.0,
-      "average_response_length_chars": 300.8,
-      "n_response_length_observed": 5,
+      "average_response_length_chars": 256.8,
+      "n_response_length_observed": 10,
       "confidence_distribution": {
-        "Medium": 5
+        "Medium": 10
       }
     },
     "Without Cognitive": {
-      "n_records": 5,
+      "n_records": 10,
       "n_failed": 0,
       "failure_rate": 0.0,
       "parser_fallback_frequency": 0.0,
-      "n_parse_mode_observed": 5,
+      "n_parse_mode_observed": 10,
       "structured_response_compliance_rate": 1.0,
-      "average_response_length_chars": 295.2,
-      "n_response_length_observed": 5,
+      "average_response_length_chars": 274.5,
+      "n_response_length_observed": 10,
       "confidence_distribution": {
-        "High": 5
+        "High": 10
       }
     },
     "Risk Only": {
-      "n_records": 5,
+      "n_records": 10,
       "n_failed": 0,
       "failure_rate": 0.0,
       "parser_fallback_frequency": 0.0,
-      "n_parse_mode_observed": 5,
+      "n_parse_mode_observed": 10,
       "structured_response_compliance_rate": 1.0,
-      "average_response_length_chars": 493.0,
-      "n_response_length_observed": 5,
+      "average_response_length_chars": 316.1,
+      "n_response_length_observed": 10,
       "confidence_distribution": {
-        "Low": 5
+        "Low": 10
       }
+    },
+    "LLM Only": {
+      "n_records": 10,
+      "n_failed": 0,
+      "failure_rate": 0.0,
+      "parser_fallback_frequency": 0.0,
+      "n_parse_mode_observed": 10,
+      "structured_response_compliance_rate": 1.0,
+      "average_response_length_chars": 313.5,
+      "n_response_length_observed": 10,
+      "confidence_distribution": "Not Evaluated"
     }
   },
   "overall": {
@@ -85,9 +96,9 @@
     "parser_fallback_frequency": 0.0,
     "structured_response_compliance_rate": 1.0,
     "confidence_distribution": {
-      "High": 15,
-      "Low": 10,
-      "Medium": 5
+      "High": 30,
+      "Low": 20,
+      "Medium": 10
     }
   }
 }

@@ -1,0 +1,134 @@
+{
+  "metadata": {
+    "platform": "Windows-10-10.0.26200-SP0",
+    "python_version": "3.11.5",
+    "gpu": "CPU Only",
+    "cpu_logical_cores": 22,
+    "cpu_physical_cores": 16,
+    "total_memory_gb": 31.61,
+    "psutil_version": "7.2.2",
+    "n_warmup_runs": 1,
+    "n_benchmark_runs": 5,
+    "cpu_sample_interval_s": 0.05,
+    "benchmark_requests_used": [
+      {
+        "user_id": "d271bd7d-6631-4969-b000-692ad069ddfe",
+        "question": "How can I improve my study habits?"
+      },
+      {
+        "user_id": "d271bd7d-6631-4969-b000-692ad069ddfe",
+        "question": "What should I focus on to improve my grades?"
+      }
+    ]
+  },
+  "per_request_raw": [
+    {
+      "status": "success",
+      "llm_called": true,
+      "retrieval_latency_ms": 311.3172000003033,
+      "prompt_build_latency_ms": 1.446100000066508,
+      "llm_latency_ms": 42175.556700000016,
+      "total_latency_ms": 43562.426599999526,
+      "memory_before_mb": 805.5859375,
+      "memory_after_mb": 806.18359375,
+      "memory_delta_mb": 0.59765625,
+      "average_cpu_percent": 15.438660399529965,
+      "peak_cpu_percent": 1396.3
+    },
+    {
+      "status": "success",
+      "llm_called": false,
+      "retrieval_latency_ms": 35.15049999987241,
+      "prompt_build_latency_ms": null,
+      "llm_latency_ms": null,
+      "total_latency_ms": 714.0467999997782,
+      "memory_before_mb": 806.16796875,
+      "memory_after_mb": 806.9140625,
+      "memory_delta_mb": 0.74609375,
+      "average_cpu_percent": 517.0533333333333,
+      "peak_cpu_percent": 1529.3
+    },
+    {
+      "status": "success",
+      "llm_called": true,
+      "retrieval_latency_ms": 47.194499999932304,
+      "prompt_build_latency_ms": 1.8258999998579384,
+      "llm_latency_ms": 41565.87899999977,
+      "total_latency_ms": 42507.09840000036,
+      "memory_before_mb": 806.9140625,
+      "memory_after_mb": 807.23046875,
+      "memory_delta_mb": 0.31640625,
+      "average_cpu_percent": 13.232494004796163,
+      "peak_cpu_percent": 1462.8
+    },
+    {
+      "status": "success",
+      "llm_called": false,
+      "retrieval_latency_ms": 50.214799999594106,
+      "prompt_build_latency_ms": null,
+      "llm_latency_ms": null,
+      "total_latency_ms": 1005.8911000005537,
+      "memory_before_mb": 807.21484375,
+      "memory_after_mb": 807.58984375,
+      "memory_delta_mb": 0.375,
+      "average_cpu_percent": 397.955,
+      "peak_cpu_percent": 1868.2
+    },
+    {
+      "status": "success",
+      "llm_called": true,
+      "retrieval_latency_ms": 35.37609999966662,
+      "prompt_build_latency_ms": 1.5178000003288616,
+      "llm_latency_ms": 41943.04910000028,
+      "total_latency_ms": 43015.777000000526,
+      "memory_before_mb": 807.58984375,
+      "memory_after_mb": 807.7734375,
+      "memory_delta_mb": 0.18359375,
+      "average_cpu_percent": 13.813214285714286,
+      "peak_cpu_percent": 1562.5
+    }
+  ],
+  "summary": {
+    "n_requests_total": 5,
+    "n_requests_llm_invoked": 3,
+    "n_requests_similarity_gated": 2,
+    "retrieval_latency_ms": {
+      "n": 5,
+      "mean": 95.85061999987374,
+      "median": 47.194499999932304,
+      "std": 120.64158208811975,
+      "min": 35.15049999987241,
+      "max": 311.3172000003033
+    },
+    "prompt_build_latency_ms": {
+      "n": 3,
+      "mean": 1.596600000084436,
+      "median": 1.5178000003288616,
+      "std": 0.2017897171104155,
+      "min": 1.446100000066508,
+      "max": 1.8258999998579384
+    },
+    "llm_latency_ms": {
+      "n": 3,
+      "mean": 41894.828266666686,
+      "median": 41943.04910000028,
+      "std": 307.68597797907125,
+      "min": 41565.87899999977,
+      "max": 42175.556700000016
+    },
+    "total_latency_ms": {
+      "n": 5,
+      "mean": 26161.04798000015,
+      "median": 42507.09840000036,
+      "std": 23099.864822438543,
+      "min": 714.0467999997782,
+      "max": 43562.426599999526
+    },
+    "average_cpu_percent": 191.49854040467474,
+    "peak_cpu_percent": 1868.2,
+    "memory_before_mb": 806.69453125,
+    "memory_after_mb": 807.13828125,
+    "memory_delta_mb": 0.44375,
+    "requests_per_second": 0.0382247683947711
+  }
+}

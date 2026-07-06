@@ -132,16 +132,32 @@ Usage:
         --questions-file my_questions.txt
 
 Outputs (all regenerated from this run's real data only):
-    ml/rag_ablation/outputs/records.jsonl   (one real observation per line)
-    ml/rag_ablation/outputs/summary.json    (aggregated, traceable metrics)
-    ml/rag_ablation/figures/*.png           (only for metrics with real data)
+    ml/rag_ablation/outputs/records.jsonl              (one real observation per line)
+    ml/rag_ablation/outputs/summary.json               (aggregated, traceable metrics)
+    ml/rag_ablation/outputs/quality_summary.json       (response-quality metrics, incl. BLEU/semantic similarity)
+    ml/rag_ablation/outputs/bleu_scores.csv            (NEW: per-record BLEU vs. gold reference)
+    ml/rag_ablation/outputs/semantic_similarity.csv    (NEW: per-record semantic similarity vs. gold reference)
+    ml/rag_ablation/outputs/gold_references.json       (NEW: auto-generated once, never overwritten thereafter)
+    ml/rag_ablation/figures/*.png                      (only for metrics with real data)
     ml/rag_ablation/reports/rag_ablation_report.md
+
+NEW ABLATION ARM: "LLM Only" -- disables retrieval, persona, risk scoring,
+SHAP, and cognitive-state evidence entirely and answers the student's raw
+question with a generic mentor system prompt (no student context at all).
+Included alongside the existing ablation arms above in every table, figure,
+and report section that iterates ABLATION_CONFIGS.
+
+NEW MULTI-USER EVALUATION: user IDs are resolved, in order, from
+--user-ids, then EVAL_USER_IDS, then an `evaluation_users` Supabase table
+(all unchanged), then finally DEFAULT_USER_IDS (>=5 built-in user IDs) if
+none of the above are available -- see resolve_eval_user_ids().
 """
 
 from __future__ import annotations
 
 import argparse
 import copy
+import csv
 import importlib
 import inspect
 import json
@@ -176,6 +192,14 @@ ABLATION_CONFIGS = [
     "Without SHAP",
     "Without Cognitive",
     "Risk Only",
+    # NEW: additional ablation arm requested by IEEE Access reviewers. Disables
+    # retrieval, persona, risk, SHAP, and cognitive evidence entirely and uses
+    # only the student's raw question with a generic mentor system prompt (see
+    # mask_context() and run_ablation_call() below). Appending it here (rather
+    # than inserting it) means every table/figure/report section that already
+    # iterates ABLATION_CONFIGS picks it up automatically, with no reordering
+    # of existing configurations and no change to their output.
+    "LLM Only",
 ]
 
 DEFAULT_QUESTIONS = [
@@ -184,6 +208,19 @@ DEFAULT_QUESTIONS = [
     "I don't understand today's material at all, I'm confused.",
     "How should I plan my revision before the next assessment?",
     "I haven't logged in for a while, where should I start again?",
+]
+
+# NEW: default evaluation user IDs for multi-user evaluation. Used only when
+# neither --user-ids nor the EVAL_USER_IDS environment variable is set AND no
+# `evaluation_users` Supabase rows are found -- i.e. purely as a final,
+# additive fallback so the study always evaluates multiple real-shaped user
+# IDs instead of exiting with zero users. See resolve_eval_user_ids() below.
+DEFAULT_USER_IDS = [
+    "eval-user-001",
+    "eval-user-002",
+    "eval-user-003",
+    "eval-user-004",
+    "eval-user-005",
 ]
 
 
@@ -343,6 +380,58 @@ def _check_ollama_reachable() -> (bool, Optional[str]):
 # 2. EVALUATION USER / QUESTION RESOLUTION (real users only)
 # =============================================================================
 
+def _fetch_real_user_ids_from_mentor_history(limit: int) -> List[str]:
+    """
+    Real-data fallback source of user IDs. `mentor_history` is populated by
+    genuine, real `ask_mentor()` calls (see this script's own module
+    docstring: "ask_mentor() also writes a row to mentor_history on every
+    call"), so distinct user_id values already sitting in that table are, by
+    construction, real students this backend has actually served -- unlike a
+    hardcoded placeholder string. Returns [] on any failure or if the table
+    is empty; never guesses or invents an ID.
+    """
+    if supabase_client is None:
+        return []
+    try:
+        resp = supabase_client.table("mentor_history").select("user_id").limit(1000).execute()
+    except Exception:  # noqa: BLE001
+        return []
+    ids: List[str] = []
+    for row in (resp.data or []):
+        uid = row.get("user_id")
+        if uid and uid not in ids:
+            ids.append(uid)
+        if len(ids) >= limit:
+            break
+    return ids
+
+
+def _filter_to_real_users(candidate_ids: List[str]) -> (List[str], List[str]):
+    """
+    Confirms each candidate user_id actually resolves to a real student via
+    the real `context_builder.build_student_context()`, splitting the input
+    into (valid_ids, invalid_ids). This is the check that stops a run of
+    placeholder-shaped IDs (or any stale/incorrect ID) from silently
+    producing an entire evaluation of `context_unavailable` / `error`
+    records -- invalid IDs are dropped and reported *before* the main
+    evaluation loop runs, instead of being discovered 7 configurations x N
+    questions later in the report.
+    """
+    if context_builder is None:
+        # Backend not importable yet -- nothing real to validate against.
+        # Trust the caller's list; evaluate_one()'s existing
+        # backend_unavailable handling will report this cleanly per-record.
+        return list(candidate_ids), []
+    valid, invalid = [], []
+    for uid in candidate_ids:
+        try:
+            ctx = context_builder.build_student_context(uid)
+        except Exception:  # noqa: BLE001
+            ctx = None
+        (valid if ctx is not None else invalid).append(uid)
+    return valid, invalid
+
+
 def resolve_eval_user_ids(cli_user_ids: Optional[str]) -> List[str]:
     if cli_user_ids:
         return [u.strip() for u in cli_user_ids.split(",") if u.strip()]
@@ -359,6 +448,50 @@ def resolve_eval_user_ids(cli_user_ids: Optional[str]) -> List[str]:
                 return ids
         except Exception:  # noqa: BLE001
             pass
+
+    # NEW (fixed): multi-user evaluation fallback. Only reached when none of
+    # --user-ids, EVAL_USER_IDS, or a populated `evaluation_users` Supabase
+    # table were available above (all of which remain fully unchanged and
+    # take priority, and are trusted as-is since the caller supplied them
+    # explicitly).
+    #
+    # Root-cause fix: a prior version of this fallback returned
+    # DEFAULT_USER_IDS verbatim -- fictitious placeholder strings
+    # ("eval-user-001", ...) that do not exist as real students in the
+    # backend database. Handing those straight to the real
+    # build_student_context()/ask_mentor() guaranteed context_unavailable
+    # for every ablation arm and error for every Full System call, for
+    # every record in the run. This is now fixed in two steps, both of
+    # which only ever use REAL, backend-verified user IDs:
+    #
+    #   1. Prefer real user_id values already sitting in `mentor_history`
+    #      (populated by genuine past ask_mentor() calls -- see
+    #      _fetch_real_user_ids_from_mentor_history()).
+    #   2. Otherwise, fall back to DEFAULT_USER_IDS but FILTER it through
+    #      the real build_student_context() first, keeping only entries
+    #      that actually resolve to a real student, and reporting (never
+    #      silently dropping) any that don't.
+    #
+    # If neither step yields any real, validated user ID, this function
+    # returns [] exactly as it originally did, so main() prints the
+    # explicit "no real evaluation user IDs" message and exits rather than
+    # running an evaluation that is guaranteed to fail on every record.
+    history_ids = _fetch_real_user_ids_from_mentor_history(limit=max(len(DEFAULT_USER_IDS), 5))
+    if history_ids:
+        return history_ids
+
+    if DEFAULT_USER_IDS:
+        valid_defaults, invalid_defaults = _filter_to_real_users(DEFAULT_USER_IDS)
+        if invalid_defaults:
+            print(
+                f"NOTE: {len(invalid_defaults)} of {len(DEFAULT_USER_IDS)} DEFAULT_USER_IDS do "
+                f"not resolve to a real student via build_student_context() in this backend and "
+                f"were dropped rather than evaluated: {invalid_defaults}. Set EVAL_USER_IDS (or "
+                f"--user-ids) to real user IDs, or populate an `evaluation_users` / "
+                f"`mentor_history` table, for a full multi-user evaluation."
+            )
+        if valid_defaults:
+            return valid_defaults
 
     return []
 
@@ -438,7 +571,55 @@ def mask_context(real_context: Any, config_name: str) -> Any:
             masked.chat_history = ""
         return masked
 
+    if config_name == "LLM Only":
+        # NOTE: this branch is no longer reached. "LLM Only" is now a true
+        # zero-context baseline -- evaluate_one() never calls
+        # build_student_context(user_id) for this arm, so mask_context() is
+        # never invoked with config_name == "LLM Only" (see run_ablation_call(),
+        # which has its own dedicated zero-context code path). Left in place,
+        # unreachable, only as documentation of what used to be masked and to
+        # keep this patch minimal / avoid touching unrelated code.
+        if hasattr(masked, "persona"):
+            masked.persona = "Unknown Persona"
+        if hasattr(masked, "intervention_style"):
+            masked.intervention_style = None
+        if hasattr(masked, "shap_available"):
+            masked.shap_available = False
+        if hasattr(masked, "shap_explanation"):
+            masked.shap_explanation = None
+        if hasattr(masked, "cognitive_state_available"):
+            masked.cognitive_state_available = False
+        if hasattr(masked, "cognitive_state"):
+            masked.cognitive_state = None
+        if hasattr(masked, "risk_score"):
+            masked.risk_score = None
+        if hasattr(masked, "risk_level"):
+            masked.risk_level = None
+        if hasattr(masked, "risk_reasons"):
+            masked.risk_reasons = None
+        if hasattr(masked, "chat_history"):
+            masked.chat_history = ""
+        if hasattr(masked, "retrieved_chunks"):
+            masked.retrieved_chunks = []
+        return masked
+
     raise ValueError(f"Unknown ablation config: {config_name}")
+
+
+# NEW: generic mentor system prompt used ONLY by the "LLM Only" ablation arm
+# (see mask_context() and run_ablation_call() above/below). Deliberately
+# contains no student context, persona, risk, SHAP, or cognitive evidence --
+# it is a plain instruction to answer the raw question as a general-purpose
+# mentor, isolating what the LLM alone (with mentor_service's own output
+# formatting instructions still appended) can produce with zero retrieved or
+# personalized evidence.
+_LLM_ONLY_GENERIC_SYSTEM_PROMPT = (
+    "You are a helpful academic mentor speaking directly with a student. "
+    "You have no access to this student's learning history, retrieved course "
+    "materials, persona, risk assessment, SHAP explanation, or cognitive "
+    "state -- answer using only the student's question below, as a generic, "
+    "best-effort mentoring response."
+)
 
 
 # =============================================================================
@@ -507,32 +688,54 @@ def run_ablation_call(
     timings: Dict[str, float] = {}
     t_total0 = time.perf_counter()
 
-    masked_context = mask_context(real_context, config_name)
-
-    # --- Retrieval ---
-    t0 = time.perf_counter()
-    if config_name == "Without Retrieval":
+    if config_name == "LLM Only":
+        # NEW: true zero-context baseline. The caller (evaluate_one()) no
+        # longer calls build_student_context(user_id) at all for this arm
+        # (real_context is None here), so there is nothing to mask, no
+        # retrieval, and no student-context-dependent confidence rubric to
+        # assess -- confidence.assess_confidence() is itself a function of
+        # student evidence, so calling it here would silently reintroduce a
+        # student-context dependency this arm is meant to eliminate. All of
+        # this is reported honestly (None / empty) rather than estimated.
+        masked_context = None
+        t0 = time.perf_counter()
         retrieved_chunks: List[Dict[str, str]] = []
+        timings["retrieval"] = time.perf_counter() - t0
+
+        t0 = time.perf_counter()
+        system_prompt = _LLM_ONLY_GENERIC_SYSTEM_PROMPT
+        system_prompt += mentor_service._build_output_format_instructions("Unknown Persona")
+        timings["prompt_build"] = time.perf_counter() - t0
+
+        confidence_result = None
+        timings["confidence"] = 0.0
     else:
-        retriever = retrieval_mod.get_retriever()
-        retrieved_chunks = retriever.retrieve(question, k=5)
-    if hasattr(masked_context, "retrieved_chunks"):
-        masked_context.retrieved_chunks = retrieved_chunks
-    timings["retrieval"] = time.perf_counter() - t0
+        masked_context = mask_context(real_context, config_name)
 
-    # --- Prompt (real prompt_builder + real mentor_service formatting fn) ---
-    t0 = time.perf_counter()
-    system_prompt = prompt_builder.build_system_prompt(masked_context, retrieved_chunks)
-    persona_for_fewshot = getattr(masked_context, "persona", "Unknown Persona")
-    system_prompt += mentor_service._build_output_format_instructions(persona_for_fewshot)
-    timings["prompt_build"] = time.perf_counter() - t0
+        # --- Retrieval ---
+        t0 = time.perf_counter()
+        if config_name == "Without Retrieval":
+            retrieved_chunks: List[Dict[str, str]] = []
+        else:
+            retriever = retrieval_mod.get_retriever()
+            retrieved_chunks = retriever.retrieve(question, k=5)
+        if hasattr(masked_context, "retrieved_chunks"):
+            masked_context.retrieved_chunks = retrieved_chunks
+        timings["retrieval"] = time.perf_counter() - t0
 
-    # --- Confidence (real, evidence-only rubric) ---
-    t0 = time.perf_counter()
-    confidence_result = confidence_mod.assess_confidence(
-        masked_context, retrieved_chunks_found=len(retrieved_chunks) > 0
-    )
-    timings["confidence"] = time.perf_counter() - t0
+        # --- Prompt (real prompt_builder + real mentor_service formatting fn) ---
+        t0 = time.perf_counter()
+        persona_for_fewshot = getattr(masked_context, "persona", "Unknown Persona")
+        system_prompt = prompt_builder.build_system_prompt(masked_context, retrieved_chunks)
+        system_prompt += mentor_service._build_output_format_instructions(persona_for_fewshot)
+        timings["prompt_build"] = time.perf_counter() - t0
+
+        # --- Confidence (real, evidence-only rubric) ---
+        t0 = time.perf_counter()
+        confidence_result = confidence_mod.assess_confidence(
+            masked_context, retrieved_chunks_found=len(retrieved_chunks) > 0
+        )
+        timings["confidence"] = time.perf_counter() - t0
 
     # --- LLM (only if live inference is actually active) ---
     raw_text: Optional[str] = None
@@ -664,17 +867,25 @@ def evaluate_one(
             return rec
 
         # ---- Ablation arms ----
-        try:
-            real_context = context_builder.build_student_context(user_id)
-        except Exception as e:  # noqa: BLE001
-            rec.status = "context_unavailable"
-            rec.error = f"build_student_context() failed: {type(e).__name__}: {e}"
-            return rec
+        if config_name == "LLM Only":
+            # NEW: true zero-context baseline -- deliberately does NOT call
+            # build_student_context(user_id) at all, so this arm's results
+            # never depend on whether the given user_id resolves to a real
+            # student (see run_ablation_call() for the matching zero-context
+            # code path). Every other ablation arm is unaffected.
+            real_context = None
+        else:
+            try:
+                real_context = context_builder.build_student_context(user_id)
+            except Exception as e:  # noqa: BLE001
+                rec.status = "context_unavailable"
+                rec.error = f"build_student_context() failed: {type(e).__name__}: {e}"
+                return rec
 
-        if real_context is None:
-            rec.status = "context_unavailable"
-            rec.error = "build_student_context() returned None for this user_id."
-            return rec
+            if real_context is None:
+                rec.status = "context_unavailable"
+                rec.error = "build_student_context() returned None for this user_id."
+                return rec
 
         rec.live_llm_used = live_llm_active
         out = run_ablation_call(user_id, question, config_name, real_context, live_llm_active, model_name)
@@ -686,7 +897,10 @@ def evaluate_one(
         rec.risk_level = getattr(mc, "risk_level", None)
         rec.shap_available = getattr(mc, "shap_available", None)
         rec.cognitive_state_available = getattr(mc, "cognitive_state_available", None)
-        rec.retrieval_available = config_name != "Without Retrieval"
+        # NEW: "LLM Only" also intentionally skips retrieval (see
+        # run_ablation_call() above), so it is reported as retrieval-
+        # unavailable here too, same as "Without Retrieval".
+        rec.retrieval_available = config_name not in ("Without Retrieval", "LLM Only")
         rec.retrieved_chunk_count = len(out["retrieved_chunks"])
         rec.retrieval_success = len(out["retrieved_chunks"]) > 0
         cr = out["confidence_result"]
@@ -903,6 +1117,281 @@ _GENERIC_FALLBACK_PHRASES = [
 ]
 
 
+# =============================================================================
+# 7B-BLEU. BLEU SCORE + SEMANTIC SIMILARITY (new -- IEEE Access reviewer
+# requirement). Purely additive: reads only EvalRecord.question /
+# EvalRecord.mentor_response_text (already captured above) plus a gold
+# reference answer, and never changes how any record is produced. Reports
+# NOT_EVALUATED (never a fabricated number) whenever a gold reference or a
+# generated response is missing, or whenever the optional `nltk` /
+# `sentence-transformers` dependency is not installed.
+# =============================================================================
+
+try:
+    from nltk.translate.bleu_score import sentence_bleu, SmoothingFunction  # type: ignore
+    _NLTK_BLEU_AVAILABLE = True
+    _BLEU_SMOOTHING = SmoothingFunction().method1
+except Exception as _e:  # noqa: BLE001 -- optional dependency, never fabricate a score without it
+    _NLTK_BLEU_AVAILABLE = False
+    _BLEU_SMOOTHING = None
+    _NLTK_BLEU_IMPORT_ERROR = f"{type(_e).__name__}: {_e}"
+
+GOLD_REFERENCES_PATH = OUTPUT_DIR / "gold_references.json"
+
+# One expert-style reference answer per built-in DEFAULT_QUESTIONS entry,
+# used ONLY to auto-generate gold_references.json the first time it is
+# missing (see load_or_create_gold_references() below). If the file already
+# exists -- from this run or a prior one -- it is loaded as-is and this
+# dict is never consulted, so a human-curated gold_references.json is never
+# overwritten.
+_DEFAULT_GOLD_REFERENCE_ANSWERS: Dict[str, str] = {
+    "I'm feeling really behind in this course, what should I do?": (
+        "Start by identifying exactly which topics you have missed, then prioritize "
+        "the one or two that later material depends on most. Review the relevant "
+        "lecture notes or recordings for those topics first, attempt a few practice "
+        "questions to confirm your understanding, and reach out to your instructor "
+        "or a study group if you are still stuck after that review. Set a short, "
+        "concrete daily catch-up goal rather than trying to cover everything at once."
+    ),
+    "Can you explain the topic we covered this week?": (
+        "This week's topic builds on the previous unit's core ideas, so the "
+        "clearest way to understand it is to first restate the key definitions in "
+        "your own words, then work through one worked example step by step. Pay "
+        "particular attention to why each step follows from the one before it, "
+        "since that reasoning is usually what assessments test. If a specific part "
+        "is still unclear, revisit the corresponding section of the course "
+        "material and try a similar practice problem before moving on."
+    ),
+    "I don't understand today's material at all, I'm confused.": (
+        "It helps to pin down the exact point where the material stopped making "
+        "sense, rather than treating the whole topic as confusing. Go back to the "
+        "last concept you were confident about, then move forward one small step "
+        "at a time, checking your understanding after each step. Re-reading the "
+        "material slowly, watching a recording of the class again, or asking a "
+        "specific question to your instructor about that one step is usually more "
+        "effective than restarting from scratch."
+    ),
+    "How should I plan my revision before the next assessment?": (
+        "Begin by listing every topic the assessment could cover and rating your "
+        "current confidence in each one, so you can prioritize the weakest areas "
+        "first. Break your available time into focused sessions, mixing review of "
+        "notes with active practice such as past questions or self-testing, since "
+        "active recall tends to be more effective than re-reading alone. Leave the "
+        "final day mainly for lighter review and rest rather than learning new "
+        "material."
+    ),
+    "I haven't logged in for a while, where should I start again?": (
+        "Start by checking the course schedule or announcements to see what has "
+        "been covered since you were last active, so you know how big the gap is. "
+        "Skim the titles and summaries of the missed sessions to judge which ones "
+        "are essential versus which can be reviewed more lightly later, and begin "
+        "with the most foundational one. Re-establishing a small, regular routine "
+        "for logging in is usually more sustainable than trying to catch up in one "
+        "long session."
+    ),
+}
+
+
+def load_or_create_gold_references() -> Dict[str, str]:
+    """
+    Loads gold_references.json if it already exists (NEVER overwritten, per
+    the study's requirement -- even a partially-filled or hand-edited file is
+    left exactly as-is). If it does not exist, auto-generates it using the
+    existing DEFAULT_QUESTIONS with one expert reference answer each, and
+    writes it once. Questions that are not in DEFAULT_QUESTIONS (e.g. a
+    custom --questions-file) simply have no entry unless a human adds one --
+    BLEU/semantic-similarity for those questions will honestly report
+    "Not Evaluated" rather than inventing a reference.
+    """
+    if GOLD_REFERENCES_PATH.exists():
+        try:
+            return json.loads(GOLD_REFERENCES_PATH.read_text(encoding="utf-8"))
+        except Exception:  # noqa: BLE001 -- unreadable/corrupt file; never overwrite, just skip
+            return {}
+
+    gold = {q: _DEFAULT_GOLD_REFERENCE_ANSWERS[q] for q in DEFAULT_QUESTIONS if q in _DEFAULT_GOLD_REFERENCE_ANSWERS}
+    try:
+        GOLD_REFERENCES_PATH.write_text(json.dumps(gold, indent=2), encoding="utf-8")
+    except Exception:  # noqa: BLE001 -- if it can't be written, still return the in-memory dict
+        pass
+    return gold
+
+
+_SOURCES_BLOCK_PATTERN = re.compile(r"\n\nSources:\n(?:- .*(?:\n|\Z))+\Z")
+
+
+def _strip_sources_block(text: Optional[str]) -> Optional[str]:
+    """
+    Evaluation-only normalization. mentor_service._build_sources_block()
+    appends a deterministic "\n\nSources:\n- ..." block to the Full System
+    arm's mentor_response before it is returned by ask_mentor(); the
+    ablation arms never have this block since they call
+    mentor_service._parse_structured_response() directly, without that
+    wrapping step. Left as-is, BLEU / semantic similarity would compare
+    "conversational reply" text (ablation arms) against "conversational
+    reply + citation list" text (Full System) -- not an apples-to-apples
+    comparison. This strips the block ONLY for the text handed to the
+    quality scorer below; EvalRecord.mentor_response_text, records.jsonl,
+    and anything mentor_service.py returns to a real end user are
+    untouched. Returns the text unchanged if no such block is found, so
+    this is a true no-op for ablation-arm text.
+    """
+    if not text:
+        return text
+    match = _SOURCES_BLOCK_PATTERN.search(text)
+    if not match:
+        return text
+    return text[: match.start()].rstrip()
+
+
+def _is_similarity_gate_fallback(text: Optional[str]) -> bool:
+    """
+    Detects mentor_service.py's fixed, non-LLM-authored similarity-gate
+    fallback message (Req: Similarity Threshold) -- returned by
+    ask_mentor() whenever retrieved evidence is too weak to safely attempt
+    an answer, before any LLM call happens. Compared directly against the
+    real mentor_service.INSUFFICIENT_EVIDENCE_MESSAGE constant (never a
+    hardcoded copy of the string), so this can never silently drift from
+    the actual fallback text if that constant is ever edited.
+
+    Evaluation-only check used to decide how to SCORE a record that
+    already exists -- does not touch retrieval, prompting, mentor
+    generation, or the similarity threshold itself. Checked against the
+    record's raw mentor_response_text (before sources-block stripping),
+    since the real gate path in mentor_service.py returns this message
+    directly with nothing appended to it.
+    """
+    if not text or mentor_service is None:
+        return False
+    gold = getattr(mentor_service, "INSUFFICIENT_EVIDENCE_MESSAGE", None)
+    if not gold:
+        return False
+    return text.strip() == gold.strip()
+
+
+def compute_bleu(reference: Optional[str], hypothesis: Optional[str]) -> Optional[float]:
+    """
+    Sentence-level BLEU (nltk, method1 smoothing to avoid zero scores on
+    short mentor responses) between a gold reference and a generated
+    response. Returns None (never a fabricated number) if either text is
+    missing/empty, if tokenization yields no tokens, or if nltk is not
+    installed -- callers report NOT_EVALUATED in that case.
+    """
+    if not _NLTK_BLEU_AVAILABLE:
+        return None
+    if not reference or not hypothesis:
+        return None
+    ref_tokens = reference.lower().split()
+    hyp_tokens = hypothesis.lower().split()
+    if not ref_tokens or not hyp_tokens:
+        return None
+    try:
+        score = sentence_bleu([ref_tokens], hyp_tokens, smoothing_function=_BLEU_SMOOTHING)
+        return round(float(score), 4)
+    except Exception:  # noqa: BLE001 -- never fabricate a score on failure
+        return None
+
+
+_SEMANTIC_MODEL = None
+_SEMANTIC_MODEL_LOAD_ERROR: Optional[str] = None
+# NEW: root-cause fix. Both _get_semantic_model() and compute_semantic_similarity()
+# previously caught every exception with a bare `except Exception: return None`,
+# so ANY failure (model load, encode, or math) was indistinguishable from "no
+# gold reference" and permanently invisible -- the caller only ever saw None /
+# "Not Evaluated", never the real error. Once _SEMANTIC_MODEL_LOAD_ERROR was set
+# once, _get_semantic_model() also short-circuits to None forever without
+# retrying, which is why *every* record after the first failure reports
+# "Not Evaluated". This module-level variable now captures the actual
+# exception text from the most recent failure so callers can expose it
+# (see evaluate_response_quality() and _write_bleu_and_semantic_csvs()) instead
+# of silently discarding it.
+_LAST_SEMANTIC_SIMILARITY_ERROR: Optional[str] = None
+
+
+def _get_semantic_model():
+    """Lazily loads sentence-transformers' all-MiniLM-L6-v2 exactly once per
+    process. Returns None (and records the error) if the optional
+    sentence-transformers dependency is unavailable -- never fabricates a
+    similarity score in that case."""
+    global _SEMANTIC_MODEL, _SEMANTIC_MODEL_LOAD_ERROR
+    if _SEMANTIC_MODEL is not None or _SEMANTIC_MODEL_LOAD_ERROR is not None:
+        return _SEMANTIC_MODEL
+    try:
+        from sentence_transformers import SentenceTransformer  # type: ignore
+        _SEMANTIC_MODEL = SentenceTransformer("all-MiniLM-L6-v2")
+    except Exception as e:  # noqa: BLE001
+        _SEMANTIC_MODEL_LOAD_ERROR = f"{type(e).__name__}: {e}"
+    return _SEMANTIC_MODEL
+
+
+def compute_semantic_similarity(reference: Optional[str], hypothesis: Optional[str]) -> Optional[float]:
+    """
+    Cosine similarity between sentence-transformers (all-MiniLM-L6-v2)
+    embeddings of the gold reference and the generated response. Returns
+    None (never a fabricated number) if either text is missing/empty or if
+    sentence-transformers is not installed -- callers report NOT_EVALUATED
+    in that case.
+    """
+    global _LAST_SEMANTIC_SIMILARITY_ERROR
+    _LAST_SEMANTIC_SIMILARITY_ERROR = None
+    if not reference or not hypothesis:
+        return None
+    model = _get_semantic_model()
+    if model is None:
+        # NEW: surface the real load failure instead of a bare None. This is
+        # the exact exception _get_semantic_model() caught (see its own
+        # docstring/comment) -- previously discarded entirely.
+        _LAST_SEMANTIC_SIMILARITY_ERROR = (
+            _SEMANTIC_MODEL_LOAD_ERROR or "sentence-transformers model unavailable for an unknown reason"
+        )
+        return None
+    try:
+        embeddings = model.encode([reference, hypothesis])
+        a, b = embeddings[0], embeddings[1]
+        norm_a = sum(x * x for x in a) ** 0.5
+        norm_b = sum(x * x for x in b) ** 0.5
+        if norm_a == 0 or norm_b == 0:
+            return None
+        dot = sum(x * y for x, y in zip(a, b))
+        return round(float(dot / (norm_a * norm_b)), 4)
+    except Exception as e:  # noqa: BLE001 -- never fabricate a score on failure,
+        # but DO record what actually failed (NEW) instead of discarding it.
+        _LAST_SEMANTIC_SIMILARITY_ERROR = f"{type(e).__name__}: {e}"
+        return None
+
+
+def _extended_text_metric_stats(values: List[float]) -> Dict[str, Any]:
+    """
+    Mean / median / std / min / max, as explicitly requested for the BLEU
+    and semantic-similarity summaries (in addition to the mean/std/CI that
+    `_stats()` already reports for every other per-record metric). Returns
+    NOT_EVALUATED for every field if there are no observed values.
+    """
+    if not values:
+        return {"n": 0, "mean": NOT_EVALUATED, "median": NOT_EVALUATED,
+                "std": NOT_EVALUATED, "min": NOT_EVALUATED, "max": NOT_EVALUATED}
+    n = len(values)
+    sorted_vals = sorted(values)
+    mean = sum(values) / n
+    if n % 2 == 1:
+        median = sorted_vals[n // 2]
+    else:
+        median = (sorted_vals[n // 2 - 1] + sorted_vals[n // 2]) / 2
+    if n >= 2:
+        var = sum((v - mean) ** 2 for v in values) / (n - 1)
+        std = math.sqrt(var)
+    else:
+        std = NOT_EVALUATED
+    return {
+        "n": n,
+        "mean": round(mean, 4),
+        "median": round(median, 4),
+        "std": round(std, 4) if std != NOT_EVALUATED else NOT_EVALUATED,
+        "min": round(min(values), 4),
+        "max": round(max(values), 4),
+    }
+
+
 @dataclass
 class QualityScore:
     user_id: str
@@ -921,6 +1410,27 @@ class QualityScore:
     grounding_risk: Any = NOT_EVALUATED
     grounding_cognitive: Any = NOT_EVALUATED
     grounding_overall: Any = NOT_EVALUATED
+    # NEW: BLEU score and semantic similarity vs. a gold reference answer for
+    # this (question, config) response. NOT_EVALUATED when no gold reference
+    # exists for this question, no response text was captured, or the
+    # optional nltk / sentence-transformers dependency is unavailable.
+    bleu_score: Any = NOT_EVALUATED
+    semantic_similarity: Any = NOT_EVALUATED
+    # NEW: root-cause-fix field. Populated only when semantic_similarity is
+    # NOT_EVALUATED *because compute_semantic_similarity() raised/recorded a
+    # real exception* (model failed to load, or embedding/cosine computation
+    # failed) -- never populated for the ordinary "no gold reference for this
+    # question" / "no response text" cases, which remain plain NOT_EVALUATED
+    # with no error. Additive field (appended at the end, default None) so
+    # existing positional/keyword construction of QualityScore is unaffected.
+    semantic_similarity_error: Optional[str] = None
+    # NEW: True when this record's mentor_response_text is
+    # mentor_service.py's fixed similarity-gate fallback string rather than
+    # LLM-generated text (see _is_similarity_gate_fallback()). When True,
+    # bleu_score / semantic_similarity are intentionally left at
+    # NOT_EVALUATED for this record -- scoring a fixed non-LLM string
+    # against a gold reference would not measure generation quality.
+    similarity_gate_triggered: bool = False
     # recommendation_diversity and tone_differentiation are population-level
     # (per config), not per-record -- see aggregate_quality().
 
@@ -1103,9 +1613,23 @@ def _score_grounding(r: EvalRecord) -> Dict[str, Any]:
     return out
 
 
-def evaluate_response_quality(records: List[EvalRecord]) -> List[QualityScore]:
+def evaluate_response_quality(
+    records: List[EvalRecord],
+    gold_references: Optional[Dict[str, str]] = None,
+) -> List[QualityScore]:
     """Per-record quality scoring (first pass). Persona consistency, which
-    needs peer records, is filled in by _fill_persona_consistency() after."""
+    needs peer records, is filled in by _fill_persona_consistency() after.
+
+    `gold_references` is optional and additive (defaults to
+    load_or_create_gold_references() when omitted, preserving the previous
+    call signature for any external caller): a {question: reference_answer}
+    mapping used to compute BLEU / semantic similarity for each record's
+    mentor_response_text. Records for a question with no gold reference, or
+    with no generated response text, report NOT_EVALUATED for both metrics.
+    """
+    if gold_references is None:
+        gold_references = load_or_create_gold_references()
+
     scores: List[QualityScore] = []
     for r in records:
         qs = QualityScore(
@@ -1119,6 +1643,37 @@ def evaluate_response_quality(records: List[EvalRecord]) -> List[QualityScore]:
         g = _score_grounding(r)
         qs.grounding_shap, qs.grounding_risk = g["shap"], g["risk"]
         qs.grounding_cognitive, qs.grounding_overall = g["cognitive"], g["overall"]
+
+        # NEW: BLEU + semantic similarity against the gold reference for this
+        # question, scored against the same mentor_response_text already
+        # captured on the record (no new backend call).
+        #
+        # Fix 1 (apples-to-apples text): normalize away the Full System
+        # arm's appended "Sources:" block before scoring, so every
+        # configuration is compared using only the conversational mentor
+        # reply. This is a no-op for ablation-arm text, which never has
+        # that block.
+        #
+        # Fix 2 (similarity-gate detection): if this record's raw response
+        # IS mentor_service's fixed similarity-gate fallback string (never
+        # LLM-generated), don't score it against the gold reference at
+        # all -- record that the gate triggered and leave both metrics at
+        # NOT_EVALUATED instead.
+        gold_ref = gold_references.get(r.question)
+        if _is_similarity_gate_fallback(r.mentor_response_text):
+            qs.similarity_gate_triggered = True
+            qs.bleu_score = NOT_EVALUATED
+            qs.semantic_similarity = NOT_EVALUATED
+        else:
+            eval_text = _strip_sources_block(r.mentor_response_text)
+            bleu = compute_bleu(gold_ref, eval_text)
+            qs.bleu_score = bleu if bleu is not None else NOT_EVALUATED
+            sim = compute_semantic_similarity(gold_ref, eval_text)
+            qs.semantic_similarity = sim if sim is not None else NOT_EVALUATED
+            # NEW: expose the real reason, if any, instead of a bare NOT_EVALUATED.
+            if sim is None and _LAST_SEMANTIC_SIMILARITY_ERROR:
+                qs.semantic_similarity_error = _LAST_SEMANTIC_SIMILARITY_ERROR
+
         scores.append(qs)
 
     _fill_persona_consistency(records, scores)
@@ -1199,6 +1754,11 @@ _PER_RECORD_METRIC_FIELDS = [
     "recommendation_quality", "persona_consistency",
     "educational_usefulness", "grounding_shap", "grounding_risk",
     "grounding_cognitive", "grounding_overall",
+    # NEW: adding these two here means aggregate_quality()'s per-config
+    # stats, the paired-vs-Full-System comparison, the CI error-bar figure,
+    # and the box/violin figure all pick them up automatically -- no other
+    # code in those functions needed to change.
+    "bleu_score", "semantic_similarity",
 ]
 
 
@@ -1449,6 +2009,38 @@ def aggregate_quality(records: List[EvalRecord], scores: List[QualityScore]) -> 
                 field_name: _paired_comparison(scores, field_name, "Full System", cfg)
                 for field_name in _PER_RECORD_METRIC_FIELDS
             }
+
+    # NEW: extended (mean/median/std/min/max) BLEU + semantic-similarity
+    # summaries, per config and overall, as explicitly requested. This is in
+    # addition to (not a replacement for) the mean/std/CI already reported
+    # above via _PER_RECORD_METRIC_FIELDS for these same two fields.
+    out["bleu_semantic_extended"] = {
+        "overall": {
+            "bleu_score": _extended_text_metric_stats(_numeric_values(scores, "bleu_score")),
+            "semantic_similarity": _extended_text_metric_stats(_numeric_values(scores, "semantic_similarity")),
+        },
+        "per_config": {
+            cfg: {
+                "bleu_score": _extended_text_metric_stats(_numeric_values(scores, "bleu_score", config=cfg)),
+                "semantic_similarity": _extended_text_metric_stats(
+                    _numeric_values(scores, "semantic_similarity", config=cfg)
+                ),
+            }
+            for cfg in ABLATION_CONFIGS
+        },
+    }
+
+    # NEW (Fix 2): count of records where the similarity gate triggered
+    # (mentor_service's fixed fallback string, never LLM-generated), which
+    # is why they carry "Not Evaluated" BLEU / semantic similarity above
+    # instead of a score.
+    out["similarity_gate"] = {
+        "total_triggered": sum(1 for s in scores if s.similarity_gate_triggered),
+        "per_config": {
+            cfg: sum(1 for s in scores if s.config == cfg and s.similarity_gate_triggered)
+            for cfg in ABLATION_CONFIGS
+        },
+    }
 
     return out
 
@@ -2004,6 +2596,99 @@ def generate_figures(
     else:
         results["quality_metrics_box_violin"] = "raw quality scores not provided to generate_figures()"
 
+    # --- Figure 7 (new): BLEU score comparison by configuration ---
+    if quality_summary:
+        qpc = quality_summary.get("per_config", {})
+        labels, values = [], []
+        for cfg in ABLATION_CONFIGS:
+            m = qpc.get(cfg, {}).get("bleu_score", {})
+            if isinstance(m.get("mean"), (int, float)):
+                labels.append(cfg)
+                values.append(m["mean"])
+        if labels:
+            fig, ax = plt.subplots(figsize=(8, 4.5))
+            ax.bar(labels, values, color="#55A868")
+            ax.set_ylabel("Mean BLEU score (vs. gold reference)")
+            ax.set_title("BLEU score by ablation configuration (observed)")
+            plt.xticks(rotation=25, ha="right")
+            plt.tight_layout()
+            out_path = FIGURE_DIR / "bleu_comparison.png"
+            fig.savefig(out_path, dpi=150)
+            plt.close(fig)
+            results["bleu_comparison"] = str(out_path)
+        else:
+            results["bleu_comparison"] = "no BLEU scores were observed in this run (missing nltk, gold reference, or response text)"
+    else:
+        results["bleu_comparison"] = "quality_summary not provided to generate_figures()"
+
+    # --- Figure 8 (new): semantic similarity comparison by configuration ---
+    if quality_summary:
+        qpc = quality_summary.get("per_config", {})
+        labels, values = [], []
+        for cfg in ABLATION_CONFIGS:
+            m = qpc.get(cfg, {}).get("semantic_similarity", {})
+            if isinstance(m.get("mean"), (int, float)):
+                labels.append(cfg)
+                values.append(m["mean"])
+        if labels:
+            fig, ax = plt.subplots(figsize=(8, 4.5))
+            ax.bar(labels, values, color="#C44E52")
+            ax.set_ylabel("Mean cosine semantic similarity (vs. gold reference)")
+            ax.set_ylim(0, 1.05)
+            ax.set_title("Semantic similarity (all-MiniLM-L6-v2) by ablation configuration (observed)")
+            plt.xticks(rotation=25, ha="right")
+            plt.tight_layout()
+            out_path = FIGURE_DIR / "semantic_similarity_comparison.png"
+            fig.savefig(out_path, dpi=150)
+            plt.close(fig)
+            results["semantic_similarity_comparison"] = str(out_path)
+        else:
+            results["semantic_similarity_comparison"] = (
+                "no semantic similarity scores were observed in this run "
+                "(missing sentence-transformers, gold reference, or response text)"
+            )
+    else:
+        results["semantic_similarity_comparison"] = "quality_summary not provided to generate_figures()"
+
+    # --- Figure 9 (new): LLM Only vs. other configurations, key metrics ---
+    if quality_summary and "LLM Only" in ABLATION_CONFIGS:
+        qpc = quality_summary.get("per_config", {})
+        llm_only_metrics = [
+            ("bleu_score", "BLEU Score"),
+            ("semantic_similarity", "Semantic Similarity"),
+            ("recommendation_quality", "Recommendation Quality (0-3)"),
+            ("grounding_overall", "Grounding Recall"),
+        ]
+        any_llm_only_data = False
+        fig, axes = plt.subplots(2, 2, figsize=(13, 9))
+        for ax, (field_name, label) in zip(axes.flat, llm_only_metrics):
+            labels, values = [], []
+            for cfg in ABLATION_CONFIGS:
+                m = qpc.get(cfg, {}).get(field_name, {})
+                if isinstance(m.get("mean"), (int, float)):
+                    labels.append(cfg)
+                    values.append(m["mean"])
+            if labels:
+                any_llm_only_data = True
+                colors = ["#DD8452" if c == "LLM Only" else "#4C72B0" for c in labels]
+                ax.bar(labels, values, color=colors)
+                ax.set_title(label, fontsize=10)
+                ax.tick_params(axis="x", rotation=30, labelsize=7)
+            else:
+                ax.set_title(label + " (no data)", fontsize=10)
+                ax.axis("off")
+        plt.tight_layout()
+        if any_llm_only_data:
+            out_path = FIGURE_DIR / "llm_only_comparison.png"
+            fig.savefig(out_path, dpi=150)
+            plt.close(fig)
+            results["llm_only_comparison"] = str(out_path)
+        else:
+            plt.close(fig)
+            results["llm_only_comparison"] = "no metrics were observed for the LLM Only configuration in this run"
+    else:
+        results["llm_only_comparison"] = "quality_summary not provided, or LLM Only not in ABLATION_CONFIGS"
+
     return results
 
 
@@ -2234,11 +2919,36 @@ def generate_report(
     if not quality_summary:
         a("_Response-quality metrics were not computed for this run._\n")
     else:
+        gate = quality_summary.get("similarity_gate", {})
+        gate_total = gate.get("total_triggered", 0)
+        a(
+            f"\n**Similarity-gate fallbacks:** {gate_total} record(s) in this run received "
+            "mentor_service.py's fixed similarity-gate fallback message (evidence too weak to "
+            "answer) rather than an LLM-generated response. These are kept in the dataset but "
+            "are excluded from BLEU / Semantic Similarity scoring -- a fixed, non-generated "
+            "string is not a meaningful comparison against a gold reference -- and are reported "
+            "as `Not Evaluated` for those two metrics instead."
+        )
+        if gate_total:
+            per_cfg_gate = gate.get("per_config", {})
+            gate_breakdown = ", ".join(
+                f"{cfg}: {n}" for cfg, n in per_cfg_gate.items() if n
+            )
+            a(f" Breakdown by configuration: {gate_breakdown}.\n")
+        else:
+            a("\n")
         qpc = quality_summary.get("per_config", {})
         deterministic_rows = [
             ("educational_usefulness", "Educational Usefulness", "0-1, recall of retrieved-chunk tokens in the response"),
             ("persona_consistency", "Persona Consistency", "0-1, within-persona response similarity"),
             ("grounding_overall", "Grounding Recall", "0-1, mean recall across available evidence sources (SHAP/risk/cognitive)"),
+            # NEW: BLEU and semantic similarity vs. a gold reference answer.
+            # Adding them here means they automatically appear in 6b.1
+            # (means table), 6b.3 (mean/std/CI detail), and 6b.4 (paired
+            # comparison vs Full System) without touching those table-
+            # rendering code paths.
+            ("bleu_score", "BLEU Score", "0-1, sentence-level BLEU (nltk, smoothed) vs. gold reference"),
+            ("semantic_similarity", "Semantic Similarity", "0-1, cosine similarity of all-MiniLM-L6-v2 embeddings vs. gold reference"),
         ]
         heuristic_rows = [
             ("recommendation_quality", "Recommendation Quality", "0-3, rule-based rubric (specificity + actionable verb + time marker)"),
@@ -2566,6 +3276,89 @@ def generate_report(
         "with many errored/`Not Evaluated` records will have few or zero valid pairs.\n"
     )
 
+    a("\n## 6h. BLEU Score and Semantic Similarity (extended statistics)\n")
+    a(
+        "Computed per generated `mentor_response_text` against a single expert gold reference "
+        "answer for the same question (see `outputs/gold_references.json`, auto-generated once "
+        "from the built-in default questions and never overwritten thereafter). BLEU uses "
+        "`nltk.translate.bleu_score.sentence_bleu` with `SmoothingFunction().method1`; Semantic "
+        "Similarity is cosine similarity between `sentence-transformers` `all-MiniLM-L6-v2` "
+        "embeddings of the reference and the generated response. Both report `Not Evaluated` "
+        "(never a fabricated number) when a question has no gold reference, the record has no "
+        "captured response text, or the optional `nltk` / `sentence-transformers` dependency is "
+        "not installed -- see \u00a79 for exact package names to add.\n"
+    )
+    if not quality_summary or not quality_summary.get("bleu_semantic_extended"):
+        a("_BLEU / semantic-similarity statistics were not computed for this run._\n")
+    else:
+        bse = quality_summary["bleu_semantic_extended"]
+        a("### 6h.1 Overall (all configurations combined)\n")
+        a("| Metric | n | Mean | Median | Std | Min | Max |")
+        a("|---|---|---|---|---|---|---|")
+        for field_name, label in (("bleu_score", "BLEU Score"), ("semantic_similarity", "Semantic Similarity")):
+            s = bse.get("overall", {}).get(field_name, {})
+            a(
+                f"| {label} | {s.get('n', 0)} | {s.get('mean', NOT_EVALUATED)} | "
+                f"{s.get('median', NOT_EVALUATED)} | {s.get('std', NOT_EVALUATED)} | "
+                f"{s.get('min', NOT_EVALUATED)} | {s.get('max', NOT_EVALUATED)} |"
+            )
+        a("\n### 6h.2 By configuration\n")
+        a("| Configuration | BLEU n | BLEU Mean | BLEU Median | BLEU Std | BLEU Min | BLEU Max | "
+          "Semantic Sim. n | Semantic Sim. Mean | Semantic Sim. Median | Semantic Sim. Std | "
+          "Semantic Sim. Min | Semantic Sim. Max |")
+        a("|---|---|---|---|---|---|---|---|---|---|---|---|---|")
+        for cfg in ABLATION_CONFIGS:
+            cfg_bse = bse.get("per_config", {}).get(cfg, {})
+            b = cfg_bse.get("bleu_score", {})
+            s = cfg_bse.get("semantic_similarity", {})
+            a(
+                f"| {cfg} | {b.get('n', 0)} | {b.get('mean', NOT_EVALUATED)} | {b.get('median', NOT_EVALUATED)} | "
+                f"{b.get('std', NOT_EVALUATED)} | {b.get('min', NOT_EVALUATED)} | {b.get('max', NOT_EVALUATED)} | "
+                f"{s.get('n', 0)} | {s.get('mean', NOT_EVALUATED)} | {s.get('median', NOT_EVALUATED)} | "
+                f"{s.get('std', NOT_EVALUATED)} | {s.get('min', NOT_EVALUATED)} | {s.get('max', NOT_EVALUATED)} |"
+            )
+        a(
+            "\nPer-record BLEU and semantic-similarity values (one row per (user, question, "
+            "config)) are also written to `outputs/bleu_scores.csv` and "
+            "`outputs/semantic_similarity.csv` respectively.\n"
+        )
+
+    a("\n## 6i. LLM Only Baseline\n")
+    a(
+        "`LLM Only` is a new ablation arm that disables retrieval, persona, risk scoring, SHAP, "
+        "and cognitive-state evidence entirely, and answers the student's raw question using only "
+        "a generic mentor system prompt (see `mask_context()` / `run_ablation_call()` in "
+        "`rag_ablation.py`, \u00a73). It serves as a lower-bound baseline: any configuration that "
+        "includes real evidence should be expected to outperform it on evidence-grounded metrics "
+        "(Evidence Fusion, Grounding Recall, Educational Usefulness) if that evidence is actually "
+        "being used by the pipeline.\n"
+    )
+    if quality_summary:
+        qpc = quality_summary.get("per_config", {})
+        llm_only = qpc.get("LLM Only", {})
+        full_system = qpc.get("Full System", {})
+        if not llm_only:
+            a("_No `LLM Only` records were observed in this run._\n")
+        else:
+            a("| Metric | LLM Only (mean) | Full System (mean) | Difference (Full System - LLM Only) |")
+            a("|---|---|---|---|")
+            for field_name, label, _scale in metric_rows:
+                lo = llm_only.get(field_name, {}).get("mean", NOT_EVALUATED)
+                fs = full_system.get(field_name, {}).get("mean", NOT_EVALUATED)
+                if isinstance(lo, (int, float)) and isinstance(fs, (int, float)):
+                    diff = round(fs - lo, 4)
+                else:
+                    diff = NOT_EVALUATED
+                a(f"| {label} | {lo} | {fs} | {diff} |")
+            a(
+                "\nA positive difference above means Full System outperformed the LLM Only "
+                "baseline on that metric in this run; `Not Evaluated` means at least one side "
+                "lacked a real observed mean for that metric.\n"
+            )
+    else:
+        a("_Response-quality metrics were not computed for this run, so no LLM Only baseline "
+          "comparison is available._\n")
+
     a("\n## 7a. Reproducibility Summary\n")
     if not reproducibility:
         a("_Reproducibility summary was not computed for this run._\n")
@@ -2601,6 +3394,34 @@ def generate_report(
     )
 
     return "\n".join(lines)
+
+
+def _write_bleu_and_semantic_csvs(quality_scores: List["QualityScore"]) -> None:
+    """
+    NEW output files (additive). One row per (user_id, question, config)
+    with its BLEU score / semantic similarity, or the literal string
+    "Not Evaluated" when that record could not be scored (missing gold
+    reference, missing response text, or missing optional dependency).
+    Never estimates a value that wasn't actually computed.
+    """
+    bleu_path = OUTPUT_DIR / "bleu_scores.csv"
+    with open(bleu_path, "w", newline="", encoding="utf-8") as f:
+        writer = csv.writer(f)
+        writer.writerow(["user_id", "question", "config", "bleu_score"])
+        for q in quality_scores:
+            writer.writerow([q.user_id, q.question, q.config, q.bleu_score])
+
+    sem_path = OUTPUT_DIR / "semantic_similarity.csv"
+    with open(sem_path, "w", newline="", encoding="utf-8") as f:
+        writer = csv.writer(f)
+        # NEW: extra trailing "semantic_similarity_error" column (additive --
+        # existing columns/order unchanged, so any code reading the first
+        # 4 columns positionally is unaffected). Empty string when there was
+        # no error (i.e. the ordinary "no gold reference" / "no response
+        # text" case, or a real score was computed).
+        writer.writerow(["user_id", "question", "config", "semantic_similarity", "semantic_similarity_error"])
+        for q in quality_scores:
+            writer.writerow([q.user_id, q.question, q.config, q.semantic_similarity, q.semantic_similarity_error or ""])
 
 
 # =============================================================================
@@ -2646,6 +3467,9 @@ def main() -> int:
             "this script will NOT invent user IDs or synthetic students. Writing a report that "
             "states this explicitly and exiting.\n"
         )
+        # NEW: gold_references.json is auto-generated (if missing) even on
+        # this early-exit path, since it never depends on having users.
+        load_or_create_gold_references()
         summary = aggregate([])
         quality_summary = aggregate_quality([], [])
         error_analysis = _error_analysis([])
@@ -2671,6 +3495,7 @@ def main() -> int:
         (OUTPUT_DIR / "correlations.json").write_text(json.dumps(correlations, indent=2), encoding="utf-8")
         (OUTPUT_DIR / "key_findings.json").write_text(json.dumps(key_findings, indent=2), encoding="utf-8")
         (OUTPUT_DIR / "reproducibility.json").write_text(json.dumps(reproducibility, indent=2), encoding="utf-8")
+        _write_bleu_and_semantic_csvs([])
         return 0
 
     print(f"Evaluating {len(user_ids)} user(s) x {len(questions)} question(s) x {len(ABLATION_CONFIGS)} configuration(s)...")
@@ -2691,12 +3516,16 @@ def main() -> int:
 
     # --- NEW: response-quality metrics (additive; does not alter records.jsonl
     # or summary.json above, which remain exactly as before) ---
-    quality_scores = evaluate_response_quality(records)
+    gold_references = load_or_create_gold_references()
+    quality_scores = evaluate_response_quality(records, gold_references=gold_references)
     quality_summary = aggregate_quality(records, quality_scores)
     (OUTPUT_DIR / "quality_records.jsonl").write_text(
         "\n".join(json.dumps(asdict(q)) for q in quality_scores), encoding="utf-8"
     )
     (OUTPUT_DIR / "quality_summary.json").write_text(json.dumps(quality_summary, indent=2), encoding="utf-8")
+
+    # --- NEW: bleu_scores.csv / semantic_similarity.csv (additive outputs) ---
+    _write_bleu_and_semantic_csvs(quality_scores)
 
     # --- NEW: correlation analysis, error analysis, key findings, and
     # reproducibility summary (all additive; computed purely from the same

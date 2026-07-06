@@ -1,22 +1,22 @@
 {
   "most_degrading_configuration": {
-    "configuration": "Risk Only",
-    "mean_diff_averaged_across_metrics": -0.1,
+    "configuration": "Without SHAP",
+    "mean_diff_averaged_across_metrics": 0.0406,
     "note": "Most negative mean (arm - Full System) averaged across all quality metrics with a real paired value."
   },
   "greatest_influence_component": {
     "component": "Persona",
     "configuration": "Without Persona",
-    "metric": "priority_focus_correctness",
-    "mean_diff": -0.4
+    "metric": "recommendation_quality",
+    "mean_diff": 1.0
   },
   "most_stable_metric": {
-    "metric": "persona_consistency",
-    "max_abs_mean_diff_across_configs": 0.097
+    "metric": "bleu_score",
+    "max_abs_mean_diff_across_configs": 0.0089
   },
   "most_sensitive_metric": {
-    "metric": "priority_focus_correctness",
-    "max_abs_mean_diff_across_configs": 0.4
+    "metric": "recommendation_quality",
+    "max_abs_mean_diff_across_configs": 1.0
   },
   "highest_failure_rate_configuration": {
     "configuration": "Full System",
@@ -24,8 +24,8 @@
   },
   "strongest_correlation": {
     "pair": "Confidence vs Educational Usefulness",
-    "coefficient": -0.1931,
-    "p_value": 0.4147,
-    "n": 20
+    "coefficient": -0.4179,
+    "p_value": 0.0073,
+    "n": 40
   }
 }

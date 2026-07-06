@@ -85,6 +85,36 @@ touch the public API/schema:
 `_SECTION_MARKERS`, the strict-match contract, the response schema
 keys, and `ask_mentor`'s public signature are unchanged.
 
+SPRINT 8 UPDATE (HALLUCINATION SAFETY HARDENING):
+`ask_mentor`'s signature and every existing return key are UNCHANGED.
+Additive-only changes:
+  1. Retrieval now uses `retrieval.TOP_K` instead of a hardcoded `k=5`.
+  2. A SIMILARITY THRESHOLD GATE runs right after retrieval: if the
+     strongest retrieved chunk's similarity is below
+     `retrieval.SIMILARITY_THRESHOLD`, the LLM is never called at all
+     -- `ask_mentor` returns the fixed "Insufficient evidence was
+     retrieved to answer this question reliably." message directly,
+     so a small model is never put in a position to improvise past
+     evidence that's too weak to ground an answer (Req: Similarity
+     Threshold).
+  3. `confidence.assess_confidence()` is now also passed the full
+     `retrieved_chunks` list (previously only a boolean), so it can
+     compute the new normalized retrieval-confidence score described
+     in confidence.py's Sprint 8 update (Req: Confidence Estimation).
+  4. `reasoning_layer.classify_retrieval_safety()` is called once per
+     request and returned as the new `retrieval_safety_label` key
+     (Req: Reasoning Layer -> SAFE / UNCERTAIN / NEEDS_REVIEW).
+  5. Every successful (non-gated) answer has a deterministic
+     "Sources:" block appended to `mentor_response`, built from
+     `prompt_builder.select_chunks_for_prompt()` -- i.e. EXACTLY the
+     chunks the model was actually shown, never a larger or
+     independently-chosen set (Req: Evidence Citations).
+  6. New additive return keys on every path (success, similarity-
+     gated, and error): `confidence_score`, `needs_human_review`,
+     `retrieval_safety_label`, `sources_used`, `max_similarity`.
+No existing key was removed, renamed, or repurposed; no database
+schema, route, or prior sprint's logic was touched.
+
 SPRINT 6 UPDATE (EVIDENCE PRIORITIZATION CONSISTENCY):
 - `_fallback_recommendations()` now calls prompt_builder.py's new
   `determine_priority_focus()` instead of independently picking
@@ -97,6 +127,28 @@ SPRINT 6 UPDATE (EVIDENCE PRIORITIZATION CONSISTENCY):
   stop the model imitating specific wording (e.g. always opening with
   "I hear you") across different learners/turns.
 No API/schema change; both are internal-only.
+
+SPRINT 9 UPDATE (BUGFIX: CONFIDENCE FIELD DISAMBIGUATION + RETRIEVAL
+GATE HARDENING):
+Two additive-only fixes, no API endpoints/routes touched, no existing
+key removed or repurposed:
+  1. "confidence" (student risk High/Medium/Low) and "confidence_score"
+     (mentor response 0..1) were easy to misread as contradictory
+     values of one concept. Two new alias keys are added everywhere
+     "confidence"/"confidence_score" already appear:
+     `student_risk_confidence` and `mentor_response_confidence`. Same
+     underlying values, same source of truth (confidence_result) —
+     purely a naming fix. See confidence.py's own Sprint update note
+     for the full rationale.
+  2. The Sprint 8 similarity-threshold gate is now explicitly commented
+     as the SOLE authoritative point that blocks the LLM call for weak
+     retrieval evidence (see inline comment at the gate itself), with
+     the comparison itself pulled into a named boolean
+     (`retrieval_evidence_too_weak`) instead of an inline expression,
+     so the gate condition can't silently drift out of sync with its
+     label across future edits. No threshold value, no gating
+     condition, and no behaviour for valid (non-gated) retrievals was
+     changed.
 
 SPRINT 7 UPDATE (MULTI-SIGNAL REASONING ARCHITECTURE):
 Adds a new `reasoning_layer.py` module and wires it in at two points:
@@ -125,13 +177,18 @@ import ollama
 from config.supabase_client import supabase
 
 from .context_builder import build_student_context, StudentContext
-from .prompt_builder import build_system_prompt, determine_priority_focus
-from .retrieval import get_retriever
-from .confidence import assess_confidence
+from .prompt_builder import (
+    build_system_prompt,
+    determine_priority_focus,
+    select_chunks_for_prompt,
+)
+from .retrieval import get_retriever, TOP_K, SIMILARITY_THRESHOLD
+from .confidence import assess_confidence, CONFIDENCE_THRESHOLD
 from .reasoning_layer import (
     get_few_shot_example,
     build_evidence_profile,
     build_conversation_plan,
+    classify_retrieval_safety,
 )
 from .prompt_builder import get_persona_actions, get_psychological_framework
 
@@ -169,6 +226,52 @@ _SECTION_MARKERS = {
     "student_rec": "###STUDENT_RECOMMENDATION###",
     "educator_rec": "###EDUCATOR_RECOMMENDATION###",
 }
+
+
+# =========================================================
+# HALLUCINATION SAFETY (SPRINT 8 ADDITION)
+# =========================================================
+# Fixed, non-LLM-authored message returned whenever retrieval evidence
+# is too weak to safely attempt an answer (Req: Similarity Threshold).
+# Kept as a single named constant rather than inlined so it is defined
+# exactly once and can be recognized verbatim by downstream tooling or
+# tests.
+INSUFFICIENT_EVIDENCE_MESSAGE = (
+    "Insufficient evidence was retrieved to answer this question reliably."
+)
+
+
+def _dedupe_preserve_order(items: list) -> list:
+    """
+    Removes duplicate source names while preserving first-seen order
+    (top retrieved chunks are already ranked by relevance, so the
+    first occurrence of a given source is also its most-relevant
+    occurrence). Plain list utility -- no evidence logic here.
+    """
+    seen = set()
+    deduped = []
+    for item in items:
+        if item is None or item in seen:
+            continue
+        seen.add(item)
+        deduped.append(item)
+    return deduped
+
+
+def _build_sources_block(source_names: list) -> str:
+    """
+    Deterministically builds the "Sources:" citation block appended to
+    every answer that was grounded in retrieved learning material (Req:
+    Evidence Citations). This is built in CODE from the exact chunks
+    `prompt_builder.select_chunks_for_prompt()` put in front of the
+    model -- not parsed out of the LLM's own text -- specifically so a
+    small model's tendency to occasionally misname or invent a source
+    can never appear in the citation list actually shown to the user.
+    """
+    if not source_names:
+        return ""
+    lines = "\n".join(f"- {name}" for name in source_names)
+    return f"\n\nSources:\n{lines}"
 
 
 def _build_output_format_instructions(persona: str = "Unknown Persona") -> str:
@@ -416,7 +519,9 @@ def _print_timing_summary(timings: Dict[str, float]) -> None:
     print(_line("Retrieval", "retrieval"))
     print(_line("Prompt build", "prompt_build"))
     print(_line("Confidence", "confidence"))
+    print(_line("Retrieval safety", "retrieval_safety"))
     print(_line("LLM", "llm"))
+    print(_line("Citations", "citations"))
     print(_line("Save history", "save_history"))
     print(_line("Reasoning summary", "reasoning_summary"))
     print(_line("TOTAL", "total"))
@@ -471,9 +576,126 @@ def ask_mentor(user_id: str, question: str) -> Dict[str, Any]:
         timings["get_retriever"] = time.perf_counter() - _t0
 
         _t0 = time.perf_counter()
-        retrieved_chunks = retriever.retrieve(question, k=5)
+        retrieved_chunks = retriever.retrieve(question, k=TOP_K)
         context.retrieved_chunks = retrieved_chunks
         timings["retrieval"] = time.perf_counter() - _t0
+
+        # -------------------------
+        # 2b. SIMILARITY THRESHOLD GATE (Hallucination Safety, Sprint 8)
+        # -------------------------
+        # `similarity_score` is computed once, in retrieval.py, from
+        # the FAISS distance for each chunk (see that file's Sprint 8
+        # update). We only read it here — nothing is recomputed. If
+        # even the single strongest retrieved chunk falls below
+        # SIMILARITY_THRESHOLD, the evidence is too weak to safely
+        # ground any answer, so we refuse to call the LLM at all
+        # rather than risk it improvising past thin evidence (Req:
+        # Similarity Threshold).
+        #
+        # ISSUE 2 HARDENING (IEEE paper note): this `if` below is the
+        # SOLE, AUTHORITATIVE gate on whether ollama.chat() is ever
+        # invoked for this request. There is no second, independent
+        # copy of this comparison anywhere else in the pipeline for
+        # this request to fall through: when the condition is True we
+        # `return` immediately, before system-prompt construction
+        # (step 3) and before the LLM call (step 5) are ever reached.
+        # `retrieval_safety_label` is still computed on this branch
+        # (via classify_retrieval_safety, same call used on the
+        # non-gated path below) purely for observability/labeling —
+        # it does not additionally gate anything here, since weak
+        # similarity alone is already sufficient grounds to refuse the
+        # LLM call (Req: Similarity Threshold takes precedence over
+        # the softer SAFE/UNCERTAIN/NEEDS_REVIEW label).
+        similarity_scores = [
+            chunk.get("similarity_score")
+            for chunk in retrieved_chunks
+            if isinstance(chunk.get("similarity_score"), (int, float))
+        ]
+        max_similarity = max(similarity_scores) if similarity_scores else 0.0
+        retrieval_evidence_too_weak = max_similarity < SIMILARITY_THRESHOLD
+
+        if retrieval_evidence_too_weak:
+            _t0 = time.perf_counter()
+            confidence_result = assess_confidence(
+                context,
+                retrieved_chunks_found=len(retrieved_chunks) > 0,
+                retrieved_chunks=retrieved_chunks,
+            )
+            timings["confidence"] = time.perf_counter() - _t0
+
+            focus = determine_priority_focus(context)
+            evidence_profile = build_evidence_profile(context, focus)
+            conversation_plan = build_conversation_plan(
+                context,
+                focus,
+                get_persona_actions(context.persona),
+                get_psychological_framework(context.persona),
+            )
+            retrieval_safety_label = classify_retrieval_safety(
+                max_similarity=max_similarity,
+                normalized_confidence=confidence_result.normalized_score,
+                contradiction_detected=confidence_result.contradiction_detected,
+                similarity_threshold=SIMILARITY_THRESHOLD,
+                confidence_threshold=CONFIDENCE_THRESHOLD,
+            )
+
+            mentor_response = INSUFFICIENT_EVIDENCE_MESSAGE
+
+            # Persist history the same way as a normal turn — same
+            # table, same columns, no schema change — so this gated
+            # response is still part of the conversation record.
+            supabase.table("mentor_history").insert({
+                "user_id": user_id,
+                "question": question,
+                "response": mentor_response,
+                "created_at": datetime.utcnow().isoformat(),
+            }).execute()
+
+            timings["total"] = time.perf_counter() - _total_start
+            _print_timing_summary(timings)
+
+            return {
+                "status": "success",
+                "question": question,
+                "mentor_response": mentor_response,
+                "persona": context.persona,
+                "risk_score": context.risk_score,
+                "risk_level": context.risk_level,
+
+                "student_recommendation": (
+                    "No confident, evidence-grounded recommendation could be "
+                    "made for this specific question — try rephrasing it or "
+                    "asking about a topic covered in the course material."
+                ),
+                "educator_recommendation": (
+                    "Retrieved evidence for this question was too weak to "
+                    "ground a response; educator review is advised before "
+                    "acting on it."
+                ),
+                "confidence": confidence_result.level,
+                "confidence_rationale": confidence_result.rationale,
+                "evidence_used": confidence_result.evidence_used,
+                "shap_available": context.shap_available,
+                "cognitive_state_available": context.cognitive_state_available,
+
+                "evidence_profile": evidence_profile,
+                "conversation_plan": conversation_plan,
+
+                # Hallucination Safety Hardening (Sprint 8) — additive:
+                "confidence_score": confidence_result.normalized_score,
+                "needs_human_review": True,
+                "retrieval_safety_label": retrieval_safety_label,
+                "sources_used": [],
+                "max_similarity": max_similarity,
+
+                # Issue 1 fix — unambiguous aliases (see success-path
+                # return below for full explanation). On this gated
+                # path mentor_response_confidence will typically be low
+                # by construction, since it's exactly why the LLM was
+                # never called.
+                "student_risk_confidence": confidence_result.student_risk_confidence,
+                "mentor_response_confidence": confidence_result.mentor_response_confidence,
+            }
 
         # -------------------------
         # 3. Build structured system prompt
@@ -491,8 +713,27 @@ def ask_mentor(user_id: str, question: str) -> Dict[str, Any]:
         confidence_result = assess_confidence(
             context,
             retrieved_chunks_found=len(retrieved_chunks) > 0,
+            retrieved_chunks=retrieved_chunks,
         )
         timings["confidence"] = time.perf_counter() - _t0
+
+        # -------------------------
+        # 4b. Retrieval safety label (Hallucination Safety, Sprint 8)
+        # -------------------------
+        # Combines the similarity we already gated on above with the
+        # normalized confidence and contradiction flag just computed,
+        # into one of SAFE / UNCERTAIN / NEEDS_REVIEW (Req: Reasoning
+        # Layer). Computed here (before the LLM call) since it depends
+        # only on retrieval + confidence, not on the model's output.
+        _t0 = time.perf_counter()
+        retrieval_safety_label = classify_retrieval_safety(
+            max_similarity=max_similarity,
+            normalized_confidence=confidence_result.normalized_score,
+            contradiction_detected=confidence_result.contradiction_detected,
+            similarity_threshold=SIMILARITY_THRESHOLD,
+            confidence_threshold=CONFIDENCE_THRESHOLD,
+        )
+        timings["retrieval_safety"] = time.perf_counter() - _t0
 
         # -------------------------
         # 5. Call the LLM
@@ -534,6 +775,27 @@ def ask_mentor(user_id: str, question: str) -> Dict[str, Any]:
         # _fallback_recommendations) instead of a static placeholder.
         parsed = _parse_structured_response(raw_text, context)
         timings["parse_response"] = time.perf_counter() - _t0
+
+        # -------------------------
+        # 5b. Evidence citations (Hallucination Safety, Sprint 8)
+        # -------------------------
+        # `select_chunks_for_prompt()` returns EXACTLY the chunks
+        # prompt_builder.py rendered into the Learning Material
+        # section this turn — reusing that function (rather than
+        # re-slicing retrieved_chunks independently here) guarantees
+        # the "Sources:" list below can never cite more, fewer, or
+        # different sources than what actually grounded the answer
+        # (Req: Evidence Citations). This is appended in CODE, not
+        # parsed out of the LLM's own text, so a small model's
+        # occasional tendency to misname or invent a source can never
+        # reach the citation list shown to the user.
+        _t0 = time.perf_counter()
+        cited_chunks = select_chunks_for_prompt(retrieved_chunks)
+        source_names = _dedupe_preserve_order(
+            [chunk.get("source") or chunk.get("topic") for chunk in cited_chunks]
+        )
+        parsed["mentor_response"] = parsed["mentor_response"] + _build_sources_block(source_names)
+        timings["citations"] = time.perf_counter() - _t0
 
         # -------------------------
         # 6. Persist chat history (same table/columns as V1 — no
@@ -584,6 +846,14 @@ def ask_mentor(user_id: str, question: str) -> Dict[str, Any]:
             "risk_level": context.risk_level,
 
             # New in V2:
+            # NOTE (Issue 1 fix — confidence-field disambiguation):
+            # "confidence" here is the STUDENT's psychological/risk-
+            # assessment confidence (High/Medium/Low), NOT a measure of
+            # how well-grounded this particular mentor response is.
+            # Kept under its original name/value for backward
+            # compatibility with existing callers; see
+            # "student_risk_confidence" below for the same value under
+            # an unambiguous name.
             "student_recommendation": parsed["student_recommendation"],
             "educator_recommendation": parsed["educator_recommendation"],
             "confidence": confidence_result.level,
@@ -595,6 +865,39 @@ def ask_mentor(user_id: str, question: str) -> Dict[str, Any]:
             # New in Sprint 7 (purely additive — safe for callers to ignore):
             "evidence_profile": evidence_profile,
             "conversation_plan": conversation_plan,
+
+            # New in Sprint 8 (Hallucination Safety Hardening) — additive:
+            # NOTE (Issue 1 fix): "confidence_score" is the MENTOR
+            # RESPONSE's retrieval-grounding confidence (0..1) — a
+            # completely different axis from "confidence" above. Kept
+            # under its original name/value for backward compatibility;
+            # see "mentor_response_confidence" below for the same value
+            # under an unambiguous name.
+            "confidence_score": confidence_result.normalized_score,
+            "needs_human_review": (
+                confidence_result.needs_human_review
+                or retrieval_safety_label == "NEEDS_REVIEW"
+            ),
+            "retrieval_safety_label": retrieval_safety_label,
+            "sources_used": source_names,
+            "max_similarity": max_similarity,
+
+            # -------------------------------------------------------
+            # Issue 1 fix — unambiguous, non-colliding field names.
+            # These are pure aliases of "confidence" and
+            # "confidence_score" above (same values, same source of
+            # truth: confidence_result). Added, not substituted, so
+            # existing consumers of "confidence"/"confidence_score"
+            # are unaffected. New/updated consumers should prefer
+            # these two names going forward:
+            #   student_risk_confidence   -> High/Medium/Low, about the
+            #                                learner's risk assessment.
+            #   mentor_response_confidence -> 0..1, about whether THIS
+            #                                answer was well-grounded
+            #                                in retrieved evidence.
+            # -------------------------------------------------------
+            "student_risk_confidence": confidence_result.student_risk_confidence,
+            "mentor_response_confidence": confidence_result.mentor_response_confidence,
         }
 
     except Exception as e:
@@ -623,4 +926,21 @@ def ask_mentor(user_id: str, question: str) -> Dict[str, Any]:
             # Sprint 7 additive keys, present-but-null on error too.
             "evidence_profile": None,
             "conversation_plan": None,
+
+            # Sprint 8 additive keys (Hallucination Safety Hardening).
+            # needs_human_review defaults True and retrieval_safety_label
+            # defaults "NEEDS_REVIEW" on the error path, since a failed
+            # request has no verified evidence behind it at all — this
+            # is a conservative default, not a computed assessment.
+            "confidence_score": None,
+            "needs_human_review": True,
+            "retrieval_safety_label": "NEEDS_REVIEW",
+            "sources_used": [],
+            "max_similarity": None,
+
+            # Issue 1 fix — unambiguous aliases, null on the error path
+            # like every other confidence-related field here (no
+            # verified evidence exists behind a failed request).
+            "student_risk_confidence": None,
+            "mentor_response_confidence": None,
         }
