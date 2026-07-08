@@ -123,6 +123,7 @@ mapping, or `build_system_prompt`'s existing section order up through
      question the retrieved material doesn't actually cover.
 """
 
+import re
 from typing import List, Dict
 
 from .context_builder import StudentContext
@@ -453,6 +454,181 @@ def determine_priority_focus(context: "StudentContext") -> Dict[str, str]:
 
 
 # =========================================================
+# PHASE 3.3: ADAPTIVE CONVERSATION PLANNING
+# =========================================================
+# `determine_conversation_goal()` decides the CONVERSATIONAL GOAL for
+# this turn -- i.e. what Aura's reply should be trying to accomplish
+# ("reduce pressure", "clarify understanding", "encourage engagement"
+# ...) -- BEFORE the response is generated. This is explicitly NOT a
+# recommendation-selection decision: `recommendation_engine.py`,
+# `select_recommendation()`, and `determine_priority_focus()` above are
+# untouched and keep deciding WHAT concrete action is recommended. The
+# conversation goal only decides the higher-level conversational
+# OBJECTIVE the reply (and, optionally, the ordering of existing
+# recommendation-reasoning sentence slots — see
+# recommendation_reasoning.apply_conversation_goal_ordering) should
+# serve.
+#
+# WHY DETERMINISTIC, NOT ML: same discipline as `determine_priority_focus`
+# and every classifier in intent_classifier.py -- this is a plain,
+# ordered set of dict/string comparisons over signals that ALREADY
+# exist by the time this runs (persona, the already-computed priority
+# focus, detected_intent, detected_emotion, detected_emotion_intensity,
+# detected_emotion_trajectory). No new evidence is gathered, no model
+# is called, and no randomness is involved, so identical inputs always
+# yield the identical goal string -- fully auditable and unit-testable
+# as a fixed table of input -> output pairs.
+#
+# PRECEDENCE (checked in this fixed order, most urgent/safety-relevant
+# signal first -- mirroring the same "urgent signal first" precedence
+# rationale already used by `classify_emotion`, `classify_intent`, and
+# `determine_priority_focus` above):
+#   1. Escalating emotional distress across recent turns is the single
+#      most urgent signal available -- it overrides persona/intent/
+#      focus framing, because no conversational objective matters if
+#      the learner's emotional state is actively worsening.
+#   2. Confusion as the dominant priority focus (Cognitive Load Theory,
+#      same rationale as `determine_priority_focus`'s own ordering) --
+#      an unresolved blocking concept must be clarified before any
+#      other conversational objective can land.
+#   3. Persona-level patterns with an unambiguous, single best-fit
+#      conversational objective (Burnout Pattern, Passive Watcher,
+#      Silent Isolator, Last-Minute Survivor, Consistent Learner).
+#   4. Career intent, when nothing more urgent above already applies.
+#   5. Success emotion, when nothing more urgent above already applies.
+#   6. A positive, stable trajectory across recent turns.
+#   7. Default: "General Support" -- no single signal above dominates,
+#      so no more specific objective than general support is claimed.
+_STABILIZING_TRAJECTORIES = {"Escalating Distress"}
+
+_PERSONA_CONVERSATION_GOALS = {
+    "Burnout Pattern": "Reduce pressure",
+    "Passive Watcher": "Encourage engagement",
+    "Silent Isolator": "Build connection",
+    "Last-Minute Survivor": "Build planning habit",
+    "Consistent Learner": "Encourage growth",
+}
+
+_DEFAULT_CONVERSATION_GOAL = "General Support"
+
+
+def determine_conversation_goal(
+    persona: str,
+    priority_focus: Dict[str, str],
+    detected_intent: str = "general",
+    detected_emotion: str = "neutral",
+    detected_emotion_intensity: str = "Medium",
+    detected_emotion_trajectory: str = "neutral",
+) -> str:
+    """
+    Returns a short conversational-goal string (e.g. "Reduce pressure",
+    "Clarify understanding", "Stabilize emotion first"). Deterministic
+    and side-effect-free -- uses ONLY the six already-computed inputs
+    listed in the signature; it gathers no new evidence, calls no
+    model, and has no randomness.
+
+    `priority_focus` is the SAME dict `determine_priority_focus(context)`
+    already produces (its "id" key is read here) -- callers should pass
+    the one they already computed for this turn rather than calling
+    `determine_priority_focus` a second time with different context.
+
+    This never selects a recommendation, never reorders retrieval, and
+    is never itself returned to an API consumer -- it is consumed only
+    by `build_system_prompt`'s new Conversation Goal section and,
+    optionally, by `recommendation_reasoning.py` to reorder (never
+    change the content of) existing conversation-strategy slots.
+    """
+    focus_id = (priority_focus or {}).get("id", "")
+    trajectory = (detected_emotion_trajectory or "").strip()
+
+    # 1. Escalating distress overrides everything else.
+    if trajectory in _STABILIZING_TRAJECTORIES:
+        return "Stabilize emotion first"
+
+    # 2. Confusion as the dominant priority focus.
+    if focus_id == "confusion":
+        return "Clarify understanding"
+
+    # 3. Persona-level patterns with an unambiguous single objective.
+    if persona in _PERSONA_CONVERSATION_GOALS:
+        return _PERSONA_CONVERSATION_GOALS[persona]
+
+    # 4. Career intent.
+    if detected_intent == "career":
+        return "Guide career decision"
+
+    # 5. Success emotion.
+    if detected_emotion == "success":
+        return "Reinforce success"
+
+    # 6. Positive, stable trajectory.
+    if trajectory == "Positive Stability":
+        return "Maintain momentum"
+
+    # 7. Default -- no single signal dominates.
+    return _DEFAULT_CONVERSATION_GOAL
+
+
+# =========================================================
+# COMPARISON QUESTION DETECTION (SPRINT D ADDITION)
+# =========================================================
+# Goal: academic answers like "difference between BFS and DFS" were
+# being answered as a single-topic explainer (explain BFS, stop) with
+# no actual comparison ever produced. This adds ONE new, deterministic,
+# side-effect-free classifier -- same pattern as `determine_priority_
+# focus` / `determine_conversation_goal` above -- that reads the raw
+# question text and returns a plain bool: is this a comparison-style
+# question or not?
+#
+# Deliberately NOT ML/embeddings-based, per the sprint requirement: a
+# fixed list of regex patterns over the question text, case-insensitive,
+# no external calls, no model, no randomness. This is pure text
+# classification, easily unit-tested with plain strings in, bool out.
+#
+# This function does not change retrieval, the similarity gate,
+# confidence, persona, or `detected_intent` -- it is consumed ONLY by
+# mentor_service.py's `_build_output_format_instructions()` to decide
+# which of two academic answer *structures* (comparison vs. normal) to
+# instruct the model to use. `detected_intent == "academic"` still
+# fully controls whether academic framing applies at all; this is a
+# secondary, purely structural signal read from the same question text,
+# exactly like `secondary_academic_signal` / `celebrated_academic_topic`
+# in mentor_service.py are secondary reads of their own question text.
+_COMPARISON_PATTERNS = [
+    re.compile(r"\bdifference(s)?\s+(between|of|among)\b", re.IGNORECASE),
+    re.compile(r"\bdiffer(s|ence)?\s+from\b", re.IGNORECASE),
+    re.compile(r"\bcompar(e|ed|es|ing|ison)\b", re.IGNORECASE),
+    re.compile(r"\bvs\.?\b", re.IGNORECASE),
+    re.compile(r"\bversus\b", re.IGNORECASE),
+    re.compile(r"\bdistinguish(es)?\s+between\b", re.IGNORECASE),
+    re.compile(r"\bwhich\s+is\s+better\b", re.IGNORECASE),
+    re.compile(r"\bwhich\s+one\s+should\s+i\s+use\b", re.IGNORECASE),
+]
+
+
+def detect_comparison_question(question: str) -> bool:
+    """
+    Deterministic, keyword/regex-based check for whether `question`
+    is asking for a comparison between two or more things (e.g.
+    "difference between BFS and DFS", "stack vs queue", "compare TCP
+    and UDP", "binary tree vs BST"). No ML, no embeddings, no model
+    call -- a plain string in, a plain bool out, so it is trivially
+    unit-testable and cannot introduce any randomness or latency into
+    the pipeline.
+
+    Returns False for empty/None input. Matching is intentionally
+    permissive (any single pattern hit counts) since false positives
+    only cause a slightly more structured academic answer -- never a
+    fabricated fact or a change to retrieval/evidence -- so the cost of
+    an occasional over-match is low, while under-matching would
+    reproduce exactly the reported bug (comparison asked, never given).
+    """
+    if not question:
+        return False
+    return any(pattern.search(question) for pattern in _COMPARISON_PATTERNS)
+
+
+# =========================================================
 # DISPLAY CAPS (prompt-rendering limits only — see rationale per section)
 # =========================================================
 # These constants control ONLY how much of an already-computed result
@@ -604,6 +780,337 @@ def _section_shap_summary(context: StudentContext) -> str:
     return "SHAP: available but in an unrecognized format. Do not invent risk drivers."
 
 
+# =========================================================
+# INTENT MODE (PHASE 1.2 ADDITION)
+# =========================================================
+# `detected_intent` was already computed by mentor_service.py
+# (intent_classifier.classify_intent) and used only for retrieval
+# routing. This adds the missing half: threading that same intent
+# into the PROMPT so it also shapes the system ROLE and response
+# style, not just which retrieval path runs.
+#
+# Persona and intent are deliberately kept independent:
+#   - Persona (see _PSYCHOLOGICAL_FRAMEWORKS / _PERSONA_ACTIONS above)
+#     controls HOW Aura speaks: tone, pacing, encouragement style.
+#   - Intent (below) controls WHAT Aura discusses and which role it
+#     plays for this specific turn: teacher, supportive mentor, career
+#     advisor, encouragement coach, or balanced mentor.
+# Priority Focus (determine_priority_focus) still decides which piece
+# of evidence to anchor on, but it must never flatten or replace the
+# persona-driven tone -- that constraint is stated explicitly in
+# `_section_identity` below.
+_INTENT_MODES = {
+    "academic": {
+        "role": "teacher",
+        "style": (
+            "lean on clear explanations and the retrieved evidence "
+            "below; cite learning-material sources by name when "
+            "discussing course content. "
+            # SPRINT A ADDITION (Academic Answer Quality): reinforces,
+            # earlier in the prompt, the same tutor-depth requirement
+            # spelled out in mentor_service.py's academic-only output
+            # format instructions -- no new data, no new section, just
+            # a fuller description of what "clear explanations" means
+            # for this intent.
+            "Go beyond a one-line definition: explain how it works, "
+            "cover key differences, steps, or characteristics as fits "
+            "the topic, and add one example only if the retrieved "
+            "material actually supports it."
+        ),
+    },
+    "emotional": {
+        "role": "supportive mentor",
+        "style": (
+            "stay reassuring and present; do not mention retrieval, "
+            "citations, or missing evidence -- this is not a content "
+            "question."
+        ),
+    },
+    "career": {
+        "role": "career advisor",
+        "style": (
+            "give a practical roadmap -- concrete next steps, "
+            "projects, or internships -- over abstract theory."
+        ),
+    },
+    "motivation": {
+        "role": "encouragement coach",
+        "style": (
+            "focus on encouragement, habit formation, and building "
+            "confidence through small, doable steps."
+        ),
+    },
+    "general": {
+        "role": "balanced mentor",
+        "style": (
+            "blend the persona's strategy with a balanced, "
+            "conversational tone appropriate to whatever the student "
+            "raises."
+        ),
+    },
+}
+_DEFAULT_INTENT_MODE = _INTENT_MODES["general"]
+
+
+# =========================================================
+# EMOTION MODE (PHASE 2.9 ADDITION)
+# =========================================================
+# `detected_emotion` is computed by the unified Message Analysis Module
+# in intent_classifier.py (see that file's Phase 2.9 update) alongside
+# `detected_intent`, from the SAME question text. It is threaded here,
+# into the Identity section, so it shapes ONLY how Aura's reply
+# emotionally opens and supports the learner -- never what evidence is
+# retrieved, never confidence, never recommendation selection.
+#
+# Persona, intent, and emotion remain three independent dimensions:
+#   - Persona (above) = HOW Aura speaks (tone, pacing, encouragement
+#     style), derived from the learner's behavioural archetype.
+#   - Intent (above)  = WHAT Aura discusses and which role it plays.
+#   - Emotion (below) = HOW Aura should emotionally frame THIS reply's
+#     opening and support, derived from the current message alone.
+# None of these three overrides another; Priority Focus still decides
+# which evidence to anchor on regardless of detected emotion.
+_EMOTION_MODES = {
+    "stress": {
+        "framing": (
+            "open by acknowledging the pressure they're under before "
+            "anything else; keep the reply calm and unhurried."
+        ),
+    },
+    "frustration": {
+        "framing": (
+            "open by validating that this is genuinely frustrating; "
+            "avoid sounding dismissive or rushing straight to a fix."
+        ),
+    },
+    "confusion": {
+        "framing": (
+            "open by normalizing that this is a confusing point; keep "
+            "the explanation patient and step-by-step."
+        ),
+    },
+    "anxiety": {
+        "framing": (
+            "open with a steadying, reassuring tone; avoid language "
+            "that could heighten worry, and keep pacing gentle."
+        ),
+    },
+    "hopelessness": {
+        "framing": (
+            "open with genuine warmth and reassurance that things are "
+            "workable; never minimize the feeling, and avoid piling on "
+            "tasks or pressure."
+        ),
+    },
+    "burnout": {
+        "framing": (
+            "open by acknowledging how drained they sound; favor rest "
+            "and small, low-effort next steps over ambitious asks."
+        ),
+    },
+    "success": {
+        "framing": (
+            "open by genuinely celebrating this win before moving on "
+            "to anything else."
+        ),
+    },
+    "confidence": {
+        "framing": (
+            "open by affirming their confidence and momentum; keep the "
+            "tone encouraging rather than cautionary."
+        ),
+    },
+    "neutral": {
+        "framing": (
+            "open in a natural, even tone -- no particular emotional "
+            "framing is called for here."
+        ),
+    },
+}
+_DEFAULT_EMOTION_MODE = _EMOTION_MODES["neutral"]
+
+
+def get_emotion_mode(detected_emotion: str) -> Dict[str, str]:
+    """
+    Public helper (mirrors get_intent_mode) returning the {framing}
+    fragment for a detected_emotion, or the "neutral" default for any
+    unrecognized value. Pure lookup -- no new classification logic;
+    emotion itself is still produced exclusively by the unified Message
+    Analysis Module (intent_classifier.classify_emotion /
+    analyze_message).
+    """
+    return _EMOTION_MODES.get(detected_emotion, _DEFAULT_EMOTION_MODE)
+
+
+# =========================================================
+# EMOTION INTENSITY MODE (PHASE 3.1 ADDITION)
+# =========================================================
+# `detected_emotion_intensity` is computed by the unified Message
+# Analysis Module (intent_classifier.classify_emotion_intensity /
+# analyze_message), from the SAME question text as emotion, and is a
+# FOURTH independent dimension threaded into the Identity section
+# alongside persona, intent, and emotion. It controls ONLY pacing,
+# validation depth, and how quickly the reply moves from emotional
+# support into guidance -- it has no path into retrieval, confidence,
+# evidence prioritization, SHAP reasoning, persona, or recommendation
+# selection (those are computed entirely elsewhere, upstream of prompt
+# construction, and never read this value).
+#
+#   - "High"   -- the emotion is expressed in absolute/overwhelming
+#     terms. Aura should slow down, validate and reassure heavily
+#     BEFORE any advice, and keep the turn's guidance minimal (fewer
+#     suggested actions) so the reply doesn't pile tasks onto someone
+#     already overwhelmed.
+#   - "Medium" -- an ordinary, amplified-but-manageable statement of
+#     the emotion. Balanced reassurance, normal pacing, guidance
+#     follows naturally after a brief acknowledgement.
+#   - "Low"    -- a mild or hedged statement of the emotion (or no
+#     emotion detected at all). A brief acknowledgement is enough;
+#     Aura should move into guidance quickly rather than dwelling on
+#     validation.
+#
+# NOTE: "fewer recommendations" for High intensity is a PROMPT
+# INSTRUCTION to the LLM about how much guidance to surface in its own
+# reply text -- it does not change `recommendation_engine.py`,
+# `determine_priority_focus`, or which student/educator recommendation
+# was selected upstream. Those remain exactly as computed before this
+# phase; only how much of that guidance the LLM chooses to elaborate on
+# in its conversational reply is nudged by this instruction.
+_EMOTION_INTENSITY_MODES = {
+    "High": {
+        "pacing": (
+            "slow your pacing right down; lead with strong, unhurried "
+            "validation and reassurance BEFORE offering any advice; "
+            "keep guidance to at most one small, gentle next step "
+            "rather than a list of recommendations."
+        ),
+    },
+    "Medium": {
+        "pacing": (
+            "offer balanced reassurance at a normal pace, then move "
+            "naturally into guidance."
+        ),
+    },
+    "Low": {
+        "pacing": (
+            "a brief acknowledgement is enough here; transition "
+            "quickly into the actual guidance."
+        ),
+    },
+}
+_DEFAULT_EMOTION_INTENSITY_MODE = _EMOTION_INTENSITY_MODES["Medium"]
+
+
+def get_emotion_intensity_mode(detected_emotion_intensity: str) -> Dict[str, str]:
+    """
+    Public helper (mirrors get_intent_mode / get_emotion_mode) returning
+    the {pacing} fragment for a detected_emotion_intensity, or the
+    "Medium" default for any unrecognized value. Pure lookup -- no new
+    classification logic; intensity itself is still produced exclusively
+    by the unified Message Analysis Module
+    (intent_classifier.classify_emotion_intensity / analyze_message).
+    """
+    return _EMOTION_INTENSITY_MODES.get(
+        detected_emotion_intensity, _DEFAULT_EMOTION_INTENSITY_MODE
+    )
+
+
+# =========================================================
+# EMOTION TRAJECTORY MODE (PHASE 3.2 ADDITION)
+# =========================================================
+# `detected_emotion_trajectory` is computed by
+# intent_classifier.classify_emotional_trajectory() /
+# analyze_message() from `context.chat_history` (read-only, no new
+# storage) plus the current turn's emotion. It is threaded here as a
+# FIFTH independent Identity dimension, alongside persona, intent,
+# emotion, and emotion intensity. It controls ONLY continuity-aware
+# emotional framing across turns -- e.g. not repeating the same
+# reassurance every message when distress is holding steady, or
+# naturally acknowledging an improving trend -- and has no path into
+# retrieval, confidence, evidence prioritization, SHAP reasoning,
+# persona, or recommendation selection.
+#
+# Keys below match `intent_classifier.VALID_EMOTION_TRAJECTORIES`
+# exactly. The lookup in `get_emotion_trajectory_mode` is
+# case-insensitive so the literal default sentinel `"neutral"` (lower-
+# case, matching the Phase 3.2 spec's default value for
+# `build_system_prompt`) resolves to the same framing as the
+# classifier's own `"Neutral"` output, without needing two separate
+# entries for what is conceptually one state.
+_EMOTION_TRAJECTORY_MODES = {
+    "stable emotional distress": {
+        "framing": (
+            "this student's distress has remained steady across "
+            "recent turns -- maintain continuity without repeatedly "
+            "restating the same reassurance."
+        ),
+    },
+    "escalating distress": {
+        "framing": (
+            "this student's emotional distress appears to be "
+            "escalating across recent turns -- respond with "
+            "heightened care and avoid moving too quickly into "
+            "task-focused advice."
+        ),
+    },
+    "improving emotional state": {
+        "framing": (
+            "this student's emotional state appears to be improving "
+            "across recent turns -- reflect that shift naturally "
+            "rather than repeating earlier concern."
+        ),
+    },
+    "positive stability": {
+        "framing": (
+            "this student has maintained a positive, confident tone "
+            "across recent turns -- keep the encouraging momentum "
+            "going."
+        ),
+    },
+    "neutral": {
+        "framing": (
+            "no notable emotional trend across recent turns -- no "
+            "special continuity framing is needed here."
+        ),
+    },
+    "mixed emotional pattern": {
+        "framing": (
+            "this student's emotional signals across recent turns are "
+            "mixed -- respond to what they've expressed in this "
+            "specific message rather than assuming a consistent trend."
+        ),
+    },
+}
+_DEFAULT_EMOTION_TRAJECTORY_MODE = _EMOTION_TRAJECTORY_MODES["neutral"]
+
+
+def get_emotion_trajectory_mode(detected_emotion_trajectory: str) -> Dict[str, str]:
+    """
+    Public helper (mirrors get_intent_mode / get_emotion_mode /
+    get_emotion_intensity_mode) returning the {framing} fragment for a
+    detected_emotion_trajectory, or the "neutral" default for any
+    unrecognized value. Lookup is case-insensitive (see module note
+    above) since the default parameter value is the lowercase sentinel
+    "neutral" while the classifier itself returns "Neutral". Pure
+    lookup -- no new classification logic; trajectory itself is still
+    produced exclusively by the unified Message Analysis Module
+    (intent_classifier.classify_emotional_trajectory / analyze_message).
+    """
+    key = (detected_emotion_trajectory or "").strip().lower()
+    return _EMOTION_TRAJECTORY_MODES.get(key, _DEFAULT_EMOTION_TRAJECTORY_MODE)
+
+
+def get_intent_mode(detected_intent: str) -> Dict[str, str]:
+    """
+    Public helper (mirrors get_persona_actions/get_psychological_framework)
+    returning the {role, style} fragment for a detected_intent, or the
+    "general" default for any unrecognized value. Pure lookup -- no new
+    classification logic; intent itself is still produced exclusively
+    by intent_classifier.classify_intent().
+    """
+    return _INTENT_MODES.get(detected_intent, _DEFAULT_INTENT_MODE)
+
+
 def _section_persona(context: StudentContext) -> str:
     # goal #3: same three data points (persona, intervention style,
     # strategy), rendered on one line instead of three.
@@ -621,6 +1128,137 @@ def _section_persona(context: StudentContext) -> str:
     return (
         f"Persona: {context.persona} ({context.intervention_style}). "
         f"Strategy: {framework} Lead with: {lead_action}."
+    )
+
+
+def _section_identity(
+    context: StudentContext,
+    detected_intent: str,
+    detected_emotion: str = "neutral",
+    detected_emotion_intensity: str = "Medium",
+    detected_emotion_trajectory: str = "neutral",
+) -> str:
+    """
+    PHASE 1.2 ADDITION -- promotes Persona from "one small context
+    section" to part of Aura's system identity, and threads
+    `detected_intent` (already computed by mentor_service.py, until
+    now used only for retrieval routing) into the same section so it
+    shapes the system ROLE and response style.
+
+    Reuses `_section_persona` verbatim for the persona fragment (same
+    persona/strategy/lead-action text as before -- no persona logic
+    duplicated or changed) and `get_intent_mode` for the intent
+    fragment. The only new content is the framing sentence that
+    establishes Aura is mentoring THIS learner right now, plus the
+    explicit independence rule: persona governs HOW Aura speaks,
+    intent governs WHAT it focuses on, and neither may suppress the
+    other -- including Priority Focus below, which decides which
+    evidence to anchor on but must never override persona-driven tone.
+
+    PHASE 2.9 UPDATE (Emotion Response Layer): adds a third,
+    independent fragment from `get_emotion_mode(detected_emotion)`, the
+    same way intent was added in Phase 1.2. `detected_emotion` defaults
+    to "neutral" so any existing caller of `_section_identity` (or of
+    `build_system_prompt`, below) that doesn't pass it keeps getting
+    the original persona+intent framing plus a no-op neutral emotion
+    line -- no existing behaviour changes for a caller that hasn't
+    adopted the new parameter. Persona/intent/emotion are stated here
+    as three explicitly independent dimensions: persona defines the
+    mentoring style, intent defines the discussion focus, and emotion
+    defines only how the reply should begin and emotionally support the
+    learner -- it does not change what evidence is retrieved, what
+    intent routing occurred, or what the Priority Focus below anchors
+    on.
+
+    PHASE 3.1 UPDATE (Emotion Intensity Layer): adds a FOURTH,
+    independent fragment from
+    `get_emotion_intensity_mode(detected_emotion_intensity)`.
+    `detected_emotion_intensity` defaults to "Medium" so any existing
+    caller that doesn't pass it keeps getting the original
+    persona+intent+emotion framing plus a balanced, normal-pacing
+    intensity line -- no existing behaviour changes for a caller that
+    hasn't adopted the new parameter. Intensity controls ONLY how
+    strongly Aura validates, reassures, and paces the reply (and how
+    much guidance it front-loads) -- it does not change what evidence
+    is retrieved, which intent/emotion was detected, which persona is
+    active, or what the Priority Focus below anchors on.
+
+    PHASE 3.2 UPDATE (Emotional Trajectory Memory): adds a FIFTH,
+    independent fragment from
+    `get_emotion_trajectory_mode(detected_emotion_trajectory)`, one
+    short continuity instruction derived from
+    `intent_classifier.classify_emotional_trajectory()` (read-only over
+    `context.chat_history` -- no new storage). `detected_emotion_trajectory`
+    defaults to "neutral" so any existing caller that doesn't pass it
+    keeps getting the original persona+intent+emotion+intensity framing
+    plus a no-op "no notable trend" line -- no existing behaviour
+    changes for a caller that hasn't adopted the new parameter.
+    Trajectory controls ONLY continuity of emotional framing ACROSS
+    turns (e.g. not repeating the same reassurance every message when
+    distress is holding steady) -- it does not change what evidence is
+    retrieved, which intent/emotion/intensity was detected, which
+    persona is active, or what the Priority Focus below anchors on.
+    All five dimensions are named explicitly in the independence
+    sentence below so the model cannot conflate "how has this trended
+    across turns" with "what to discuss," "which evidence to
+    prioritize," or any of the other four.
+    """
+    persona_fragment = _section_persona(context)
+    mode = get_intent_mode(detected_intent)
+    emotion_mode = get_emotion_mode(detected_emotion)
+    intensity_mode = get_emotion_intensity_mode(detected_emotion_intensity)
+    trajectory_mode = get_emotion_trajectory_mode(detected_emotion_trajectory)
+    return (
+        f"IDENTITY: You are Aura, mentoring {context.student_name} in "
+        f"this conversation. {persona_fragment} Detected intent for "
+        f"this turn: {detected_intent} -- act as a {mode['role']}: "
+        f"{mode['style']} Detected emotion for this turn: "
+        f"{detected_emotion} -- {emotion_mode['framing']} Detected "
+        f"emotion intensity for this turn: {detected_emotion_intensity} "
+        f"-- {intensity_mode['pacing']} Emotional trajectory across "
+        f"recent turns: {detected_emotion_trajectory} -- "
+        f"{trajectory_mode['framing']} Persona, intent, emotion, "
+        f"emotion intensity, and emotion trajectory are independent: "
+        f"persona controls the mentoring style (tone, pacing, "
+        f"encouragement); intent controls the conversation purpose "
+        f"(what you discuss and how you structure the reply); emotion "
+        f"controls the emotional framing (how the reply should begin "
+        f"and emotionally support the learner); emotion intensity "
+        f"controls how strongly Aura should validate, reassure, and "
+        f"pace the response; emotion trajectory controls only "
+        f"continuity of that emotional framing across recent turns. "
+        f"None of these five may suppress or override the others -- "
+        f"including the PRIORITY FOCUS below, which decides WHAT "
+        f"evidence to anchor on but must never flatten or override the "
+        f"persona-, emotion-, intensity-, or trajectory-driven framing "
+        f"established here."
+    )
+
+
+def _section_conversation_goal(conversation_goal: str = _DEFAULT_CONVERSATION_GOAL) -> str:
+    """
+    PHASE 3.3 ADDITION (Adaptive Conversation Planning). One short,
+    additional section placed immediately after Identity. States the
+    already-computed `conversation_goal` (see `determine_conversation_goal`
+    above) as this turn's mentoring objective -- it does not repeat or
+    contradict anything in the Identity section (persona/intent/
+    emotion/intensity/trajectory framing there is untouched), and it
+    does not itself pick or describe a recommendation (Priority Focus,
+    further down, still owns that).
+
+    `conversation_goal` defaults to `_DEFAULT_CONVERSATION_GOAL`
+    ("General Support") so any existing caller of `build_system_prompt`
+    that doesn't pass one keeps getting a harmless, generic objective
+    line -- no existing behaviour changes for a caller that hasn't
+    adopted the new parameter.
+
+    Kept deliberately short (one sentence), per the Phase 3.3 spec.
+    """
+    goal_text = (conversation_goal or _DEFAULT_CONVERSATION_GOAL).strip()
+    lowered = goal_text.lower()
+    return (
+        "CONVERSATION GOAL: Today's mentoring objective is to "
+        f"{lowered} before suggesting any academic action."
     )
 
 
@@ -996,37 +1634,28 @@ def _section_response_instructions() -> str:
     #     instruction-side half of Recommendation Diversity; the
     #     code-side half is `derive_persona_memory()` deciding WHAT was
     #     already used.
+    # PHASE 1.2 UPDATE: restructured from a flat instruction block into
+    # an explicitly prioritized 1-7 list, per the Phase 1.2 review. No
+    # constraint from the previous version was dropped -- each of the
+    # 7 numbered items below still covers the same ground (tone,
+    # intent, evidence use, generic-advice ban, repetition ban,
+    # internals/hallucination safety, output format); they are simply
+    # ordered so the model applies them in the priority order a small
+    # instruction-follower benefits from most: identity/tone first,
+    # then intent, then substance, then safety/format last.
     return (
-        "Instructions: Be warm, follow the assigned strategy and the "
-        "PRIORITY FOCUS above — that is the ONE signal your reply and "
-        "both recommendations must anchor on; treat SECONDARY/"
-        "SUPPORTING evidence in EVIDENCE FUSION as background only, and "
-        "the LOWER PRIORITY items only if directly asked. Follow the "
-        "CONVERSATION PLAN's opening goal, teaching style, and "
-        "recommendation style rather than inventing your own structure. "
-        "Respect CONTINUITY: do not reopen with the same phrasing as "
-        "last time, and do not repeat a previously-used recommendation "
-        "— offer a genuinely different one. Do not give generic advice "
-        "(e.g. 'take deep breaths', 'study more', 'stay positive') "
-        "unless tied to the priority focus. Both recommendations must "
-        "follow directly from what your reply just said, not introduce "
-        "new, unrelated advice. "
-        "**PRIVACY PROTECTION**: Under <MENTOR_REPLY> and <STUDENT_RECOMMENDATION>, "
-        "you MUST NEVER reveal internal model confidence, SHAP explanations, "
-        "or raw prediction probabilities to the student. You may only "
-        "include these analytical details under <EDUCATOR_RECOMMENDATION>. "
-        "**MISUSE PREVENTION**: Every recommendation must clearly state that "
-        "it is advisory and not an autonomous decision. If evidence is "
-        "insufficient, you must prevent unsupported recommendations by "
-        "stating that you cannot make a fully supported recommendation. "
-        "Vary your opening phrase — do not default "
-        "to 'I understand' or 'It sounds like' every time. Adapt to "
-        "question type; stay concise; keep recs evidence-based or say "
-        "evidence is thin. You MUST output all three section markers "
-        "below, exactly as given, every time — do not omit or rename "
-        "them. Per HALLUCINATION SAFETY above: never fabricate a fact, "
-        "statistic, or source, and never answer a course-content "
-        "question beyond what the Learning material excerpts support."
+(
+    "Instructions (apply in this priority order): "
+    "1. Maintain the persona-specific tone, pacing, and encouragement style set out in IDENTITY above throughout the reply. "
+    "2. Respect the detected intent's role from IDENTITY. "
+    "3. Anchor your reply and both recommendations on the ONE signal named in PRIORITY FOCUS; treat secondary evidence only as background and follow the CONVERSATION PLAN. "
+    "4. Avoid generic recommendations unless tied to concrete evidence, and ensure both recommendations naturally follow from the reply. "
+    "5. Respect CONTINUITY: vary openings and avoid repeating previous recommendations. "
+    "**PRIVACY PROTECTION**: Under <MENTOR_REPLY> and <STUDENT_RECOMMENDATION>, NEVER reveal internal model confidence, SHAP explanations, or raw prediction probabilities. These analytical details may only appear under <EDUCATOR_RECOMMENDATION>. "
+    "**MISUSE PREVENTION**: Every recommendation must clearly state that it is advisory, not an autonomous decision. If evidence is insufficient, explicitly state that a fully supported recommendation cannot be made. "
+    "6. Never expose internal implementation, invent unavailable data, fabricate facts, statistics, or sources, or answer course-content questions beyond the retrieved Learning Material. "
+    "7. You MUST output all three required section markers exactly as specified every time."
+)
     )
 
 
@@ -1046,18 +1675,19 @@ def _section_response_instructions() -> str:
 
 _DEBUG_SECTION_LABELS = [
     "System Role",
-    "Student Profile",
+    "Identity (Persona + Intent + Emotion + Intensity + Trajectory)",  # Phase 1.2 (was "Persona"); Phase 2.9 adds Emotion; Phase 3.1 adds Intensity; Phase 3.2 adds Trajectory
+    "Conversation Goal",  # Phase 3.3 (Adaptive Conversation Planning)
+    "Priority Focus",
     "Academic Risk",
     "SHAP",
-    "Persona",
     "Cognitive",
-    "Learning Material",
-    "History",
-    "Priority Focus",
     "Evidence Fusion",       # Sprint 7
     "Conversation Plan",     # Sprint 7
+    "Student Profile",
+    "History",
     "Continuity",            # Sprint 7
     "Confidence Weighting",  # Sprint 7
+    "Learning Material",
     "Hallucination Safety",  # Sprint 8
     "Instructions",
 ]
@@ -1080,51 +1710,112 @@ def _debug_print_section_sizes(labeled_sections: List[tuple]) -> None:
 def build_system_prompt(
     context: StudentContext,
     retrieved_chunks: List[Dict[str, str]],
+    detected_intent: str = "general",
+    detected_emotion: str = "neutral",
+    detected_emotion_intensity: str = "Medium",
+    detected_emotion_trajectory: str = "neutral",
+    conversation_goal: str = _DEFAULT_CONVERSATION_GOAL,
 ) -> str:
     """
     Assembles the full structured system prompt from individual,
-    independently-testable sections. Section order is UNCHANGED through
-    `_section_priority_focus` (Sprint 6). SPRINT 7 appends four new
-    sections immediately after it — Evidence Fusion, Conversation Plan,
-    Continuity, and Confidence Weighting — all synthesis-over-evidence
-    sections, so they sit together after the raw evidence and right
-    before the final instructions, same placement rationale as
-    Sprint 6's Priority Focus (recency helps small instruction-
-    followers weight a synthesis section over raw facts).
+    independently-testable sections.
 
-    `determine_priority_focus(context)` is now called ONCE here and
-    the result (`focus`) is shared with `_section_priority_focus`,
-    `_section_evidence_fusion`, and `_section_conversation_plan` —
-    previously `_section_priority_focus` computed it internally. The
-    function and its return value are unchanged; this is purely to
-    avoid recomputing the same deterministic result multiple times
-    per prompt build.
+    PHASE 3.3 UPDATE (Adaptive Conversation Planning): new
+    `conversation_goal` parameter, defaulting to `_DEFAULT_CONVERSATION_GOAL`
+    ("General Support") so any existing caller that doesn't pass it
+    keeps working exactly as before (backward compatible, same pattern
+    as every prior phase's additive parameter). mentor_service.py
+    computes this value via `determine_conversation_goal()` (see above)
+    and passes it in; it is rendered as ONE new, short section
+    (`_section_conversation_goal`) placed immediately after Identity --
+    no other section, no retrieval/confidence/reasoning/recommendation
+    logic, and no existing section's internal computation or ordering
+    relative to each other was changed. This value is never exposed
+    through the API response.
 
-    SPRINT 8 ADDITION: `_section_hallucination_safety()` is appended
-    immediately after `_section_confidence_weighting` and before
-    `_section_response_instructions` -- same "synthesis section
-    benefits from recency" placement rationale as Sprint 6/7's
-    sections. It takes no arguments and reads no context, so it is
-    inserted without needing any new value threaded through this
-    function.
+    PHASE 3.2 UPDATE (Emotional Trajectory Memory): new
+    `detected_emotion_trajectory` parameter, defaulting to "neutral" so
+    any existing caller that doesn't pass it keeps working exactly as
+    before (backward compatible, same pattern as
+    `detected_emotion_intensity`'s Phase 3.1 addition). It is threaded
+    only into `_section_identity`, alongside persona, intent, emotion,
+    and emotion intensity -- no other section, no
+    retrieval/confidence/reasoning/recommendation logic, and no section
+    ordering changed in this update.
+
+    PHASE 3.1 UPDATE (Emotion Intensity Layer): new
+    `detected_emotion_intensity` parameter, defaulting to "Medium" so
+    any existing caller that doesn't pass it keeps working exactly as
+    before (backward compatible, same pattern as `detected_emotion`'s
+    Phase 2.9 addition and `detected_intent`'s Phase 1.2 addition). It
+    is threaded only into `_section_identity`, alongside persona,
+    intent, and emotion -- no other section, no
+    retrieval/confidence/reasoning/recommendation logic, and no
+    section ordering changed in this update.
+
+    PHASE 2.9 UPDATE (Emotion Response Layer): new `detected_emotion`
+    parameter, defaulting to "neutral" so any existing caller that
+    doesn't pass it keeps working exactly as before (backward
+    compatible, same as `detected_intent`'s Phase 1.2 addition). It is
+    threaded only into `_section_identity`, alongside persona and
+    intent -- no other section, no retrieval/confidence/reasoning
+    logic, and no section ordering changed in this update.
+
+    PHASE 1.2 UPDATE (persona + intent driven prompt): two changes to
+    this function, both purely about WHICH sections run and in WHAT
+    ORDER -- no section's internal computation, no schema, and no
+    other pipeline (retrieval/confidence/reasoning) was touched:
+
+      1. New `detected_intent` parameter (defaults to "general" so any
+         existing caller that doesn't pass it keeps working exactly as
+         before). mentor_service.py already computes this value via
+         intent_classifier.classify_intent() for retrieval routing;
+         it is now also threaded here so intent shapes the system
+         ROLE and response style, not just which retrieval path runs.
+         `_section_persona` was replaced in the section list below by
+         `_section_identity(context, detected_intent)`, which reuses
+         `_section_persona` internally (identical persona text) and
+         adds the intent-driven role/style framing next to it.
+
+      2. Section order now follows: SYSTEM ROLE -> IDENTITY (persona +
+         intent) -> Priority Focus -> Evidence (Academic Risk, SHAP,
+         Cognitive, Evidence Fusion) -> Conversation Plan -> Student
+         Context (Student Profile, History, Continuity, Confidence
+         Weighting) -> Learning Material -> Hallucination Safety ->
+         Instructions. This puts identity (WHO the model is speaking
+         to and acting as) before any evidence, so the model reads
+         persona/intent framing before it starts weighing facts. Every
+         individual section function is unchanged; only their position
+         in this list moved.
+
+    `determine_priority_focus(context)` is still called ONCE here and
+    shared with `_section_priority_focus`, `_section_evidence_fusion`,
+    and `_section_conversation_plan`, exactly as before.
     """
 
     focus = determine_priority_focus(context)
 
     sections = [
         _section_system_role(),
-        _section_student_profile(context),
+        _section_identity(
+            context,
+            detected_intent,
+            detected_emotion,
+            detected_emotion_intensity,
+            detected_emotion_trajectory,
+        ),
+        _section_conversation_goal(conversation_goal),
+        _section_priority_focus(focus),
         _section_academic_risk(context),
         _section_shap_summary(context),
-        _section_persona(context),
         _section_cognitive_intelligence(context),
-        _section_learning_material(retrieved_chunks),
-        _section_conversation_history(context.chat_history),
-        _section_priority_focus(focus),
         _section_evidence_fusion(context, focus),
         _section_conversation_plan(context, focus),
+        _section_student_profile(context),
+        _section_conversation_history(context.chat_history),
         _section_continuity(context),
         _section_confidence_weighting(context),
+        _section_learning_material(retrieved_chunks),
         _section_hallucination_safety(),
         _section_response_instructions(),
     ]
