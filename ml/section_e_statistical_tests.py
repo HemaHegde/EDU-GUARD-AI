@@ -166,7 +166,7 @@ results = []
 sig_threshold = 0.05
 
 print(f"\n  {'Comparison':<40} {'AUC_XGB':>8} {'AUC_Baseline':>12} "
-      f"{'DeLong_z':>10} {'DeLong_p':>10} {'McNemar_χ²':>12} {'McNemar_p':>10} {'Sig':>4}")
+      f"{'DeLong_z':>10} {'DeLong_p':>10} {'McNemar_chi2':>12} {'McNemar_p':>10} {'Sig':>4}")
 print("  " + "-" * 110)
 
 for baseline_name, b_pred, b_prob in comparisons:

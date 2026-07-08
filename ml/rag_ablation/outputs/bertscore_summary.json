@@ -1,0 +1,71 @@
+{
+  "implementation": "real_bertscore (distilbert-base-uncased)",
+  "metric_note": "Real BERTScore token-level P/R/F1.",
+  "n_evaluated": 70,
+  "n_skipped": 0,
+  "per_config_bertscore_f1": {
+    "Full System": {
+      "n": 10,
+      "mean": 0.7071,
+      "std": 0.0115,
+      "min": 0.7004,
+      "max": 0.7334,
+      "ci95_lo": 0.7,
+      "ci95_hi": 0.7142
+    },
+    "Without Retrieval": {
+      "n": 10,
+      "mean": 0.7407,
+      "std": 0.0197,
+      "min": 0.6934,
+      "max": 0.7675,
+      "ci95_lo": 0.7285,
+      "ci95_hi": 0.7529
+    },
+    "Without Persona": {
+      "n": 10,
+      "mean": 0.74,
+      "std": 0.0124,
+      "min": 0.711,
+      "max": 0.762,
+      "ci95_lo": 0.7323,
+      "ci95_hi": 0.7476
+    },
+    "Without SHAP": {
+      "n": 10,
+      "mean": 0.7375,
+      "std": 0.0082,
+      "min": 0.7226,
+      "max": 0.7509,
+      "ci95_lo": 0.7324,
+      "ci95_hi": 0.7426
+    },
+    "Without Cognitive": {
+      "n": 10,
+      "mean": 0.744,
+      "std": 0.0138,
+      "min": 0.7256,
+      "max": 0.7698,
+      "ci95_lo": 0.7354,
+      "ci95_hi": 0.7525
+    },
+    "Risk Only": {
+      "n": 10,
+      "mean": 0.7509,
+      "std": 0.0104,
+      "min": 0.7353,
+      "max": 0.7701,
+      "ci95_lo": 0.7445,
+      "ci95_hi": 0.7573
+    },
+    "LLM Only": {
+      "n": 10,
+      "mean": 0.7588,
+      "std": 0.0321,
+      "min": 0.7147,
+      "max": 0.8169,
+      "ci95_lo": 0.7389,
+      "ci95_hi": 0.7787
+    }
+  }
+}

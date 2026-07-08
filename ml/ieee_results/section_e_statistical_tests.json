@@ -22,5 +22,29 @@
     "mcnemar_p": 0.132285,
     "significant_0.05": false,
     "significance_label": "ns"
+  },
+  {
+    "comparison": "XGBoost vs LightGBM",
+    "auc_xgboost": 0.9486,
+    "auc_baseline": 0.9483,
+    "auc_difference": 0.0003,
+    "delong_z": 0.0779,
+    "delong_p": 0.9379,
+    "mcnemar_chi2": 1.3981,
+    "mcnemar_p": 0.237049,
+    "significant_0.05": false,
+    "significance_label": "ns"
+  },
+  {
+    "comparison": "XGBoost vs CatBoost",
+    "auc_xgboost": 0.9486,
+    "auc_baseline": 0.9495,
+    "auc_difference": -0.0008,
+    "delong_z": -0.2176,
+    "delong_p": 0.82772,
+    "mcnemar_chi2": 0.266,
+    "mcnemar_p": 0.606057,
+    "significant_0.05": false,
+    "significance_label": "ns"
   }
 ]

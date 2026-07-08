@@ -1,0 +1,137 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# EduGuard-AI — Central Configuration File
+# ─────────────────────────────────────────────────────────────────────────────
+# Single source of truth for all tunable constants.
+# Import in Python: import yaml; cfg = yaml.safe_load(open("config.yaml"))
+# ─────────────────────────────────────────────────────────────────────────────
+
+# ── Reproducibility ────────────────────────────────────────────────────────────
+random_seed: 42            # used everywhere: XGBoost, KMeans, t-SNE, UMAP, PCA,
+                           # bootstrap CIs, train/test splits
+
+# ── Dataset ───────────────────────────────────────────────────────────────────
+data:
+  oulad_dataset: "ml/final_student_psychology_dataset.csv"
+  assistments_raw: "datasets/ASSISTments/2012-2013-data-with-predictions-4-final.csv"
+  assistments_profiles: "datasets/ASSISTments/assistments_student_profiles.csv"
+  studentInfo: "studentInfo.csv"
+  studentAssessment: "studentAssessment.csv"
+  studentVle: "studentVle.csv"
+  studentRegistration: "studentRegistration.csv"
+
+# ── Model Artifacts ───────────────────────────────────────────────────────────
+models:
+  xgboost_pkl: "ml/academic_risk_xgboost.pkl"
+  persona_kmeans_pkl: "ml/persona_kmeans.pkl"
+  persona_scaler_pkl: "ml/persona_scaler.pkl"
+  faiss_index: "ml/ai_mentor/mentor_vector_index.faiss"
+  chunk_metadata: "ml/ai_mentor/mentor_chunk_metadata.csv"
+
+# ── XGBoost Hyperparameters ────────────────────────────────────────────────────
+xgboost:
+  n_estimators: 300
+  max_depth: 6
+  learning_rate: 0.03
+  subsample: 0.8
+  colsample_bytree: 0.8
+  eval_metric: "logloss"
+  verbosity: 0
+
+# ── Train / Test Split ────────────────────────────────────────────────────────
+split:
+  test_size: 0.20
+  stratify: true           # stratify on psychological_risk label
+
+# ── Persona Clustering ────────────────────────────────────────────────────────
+clustering:
+  n_clusters: 6
+  n_init: 20
+  max_iter: 500
+  n_seeds_stability: 20    # seeds 0–19 for ARI stability analysis
+  silhouette_sample: 8000  # subsample size for silhouette (O(n²) cost)
+
+# ── Fairness / Ethics ─────────────────────────────────────────────────────────
+fairness:
+  decision_threshold: 0.5
+  min_group_size: 30            # minimum n for fairness-ratio metrics (SPD/DIR)
+  min_group_size_basic: 5       # minimum n for descriptive stats
+  n_calibration_bins: 5
+  bootstrap_n_resamples: 1000
+  bootstrap_seed: 42
+  four_fifths_lower: 0.80       # DIR < this → flagged
+  four_fifths_upper: 1.25       # DIR > this → flagged
+
+# ── Retrieval (RAG) ────────────────────────────────────────────────────────────
+retrieval:
+  embedding_model: "all-MiniLM-L6-v2"
+  top_k: 5
+  similarity_threshold: 0.35    # below this → hallucination safety gate fires
+
+# ── Confidence Scoring ────────────────────────────────────────────────────────
+confidence:
+  threshold: 0.50               # below → needs_human_review = True
+  consistency_contradiction_floor: 0.50
+  weight_similarity: 0.50
+  weight_consistency: 0.30
+  weight_chunk_count: 0.20
+
+# ── LLM / Ollama ──────────────────────────────────────────────────────────────
+llm:
+  model: "qwen2.5:3b"
+  temperature: 0.5
+  top_p: 0.9
+  ollama_base_url: "http://localhost:11434"
+
+# ── Cross-Validation ──────────────────────────────────────────────────────────
+kfold:
+  n_splits: 5
+  shuffle: true
+
+# ── Robustness Testing ────────────────────────────────────────────────────────
+robustness:
+  noise_levels: [0, 5, 10, 20]   # noise injected as % of feature std
+
+# ── Computational Benchmarking ────────────────────────────────────────────────
+benchmarking:
+  n_warmup_requests: 1
+  n_timed_requests: 5
+  cpu_sample_interval_ms: 50
+  batch_sizes_xgboost: [1, 10, 100, 1000, 10000]
+  batch_sizes_api: [1, 5, 10, 20, 50, 100]
+
+# ── External Validation ───────────────────────────────────────────────────────
+external_validation:
+  ground_truth_avg_score_threshold: 50.0   # avg_score < this → at-risk label
+  shap_sample_size: 10000                   # rows per dataset for SHAP comparison
+
+# ── RAG Ablation ──────────────────────────────────────────────────────────────
+rag_ablation:
+  default_questions:
+    - "I'm feeling really behind in this course, what should I do?"
+    - "Can you explain the topic we covered this week?"
+    - "I don't understand today's material at all, I'm confused."
+    - "How should I plan my revision before the next assessment?"
+    - "I haven't logged in for a while, where should I start again?"
+  ablation_configs:
+    - "Full System"
+    - "Without Retrieval"
+    - "Without Persona"
+    - "Without SHAP"
+    - "Without Cognitive"
+    - "Risk Only"
+    - "LLM Only"
+
+# ── Output Directories ────────────────────────────────────────────────────────
+output:
+  ieee_results: "ml/ieee_results"
+  ieee_figures: "ml/ieee_results/figures"
+  rag_ablation_outputs: "ml/rag_ablation/outputs"
+  rag_ablation_figures: "ml/rag_ablation/figures"
+  ethics_figures: "ml/ethics_fairness/figures"
+  ethics_reports: "ml/ethics_fairness/reports"
+  error_analysis_outputs: "ml/error_analysis/outputs"
+  error_analysis_figures: "ml/error_analysis/figures"
+  external_val_figures: "ml/external_validation/figures"
+  external_val_reports: "ml/external_validation/reports"
+  reproducibility_reports: "ml/reproducibility/reports"
+  mentor_benchmark_outputs: "backend/services/mentor_benchmark_outputs"
