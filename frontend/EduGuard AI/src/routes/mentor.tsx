@@ -591,7 +591,43 @@ function SourceChips({ value }: { value: any }) {
 // COMPONENT
 // =========================
 
+// =========================
+// EVAL MODE SCENARIO CONFIG
+// Each scenario maps to a seed profile,
+// a question, and a screenshot filename.
+// =========================
+
+const EVAL_SCENARIOS: Record<
+  string,
+  { profile: string; question: string; label: string }
+> = {
+  low: {
+    profile: "consistent",
+    question:
+      "I've been doing well in my studies recently. What should I focus on next to continue improving?",
+    label: "Consistent Learner",
+  },
+  moderate: {
+    profile: "last_minute",
+    question:
+      "I've been falling behind lately and often leave my coursework until the last minute. What is one practical step I can take to improve?",
+    label: "Last-Minute Survivor",
+  },
+  high: {
+    profile: "burnout",
+    question:
+      "I've been feeling overwhelmed and haven't been studying for a while. What's one small step I can take today to get back on track?",
+    label: "Burnout Pattern",
+  },
+};
+
 function MentorPage() {
+
+  // Evaluation Mode (Sprint 11)
+  const searchParams = new URLSearchParams(window.location.search);
+  const isEvalMode = searchParams.get("eval_mode") === "true";
+  const evalScenario = searchParams.get("scenario") ?? "low";
+  const scenarioConfig = EVAL_SCENARIOS[evalScenario] ?? EVAL_SCENARIOS["low"];
 
   const [messages, setMessages] =
     useState<Message[]>([]);
@@ -740,10 +776,21 @@ function MentorPage() {
   // =========================
   // IMPROVEMENT 3 — MEMORY GREETING
   // Fetch history from Supabase, show
-  // personalised welcome back message
+  // personalised welcome back message.
+  // In Evaluation Mode this is suppressed
+  // entirely — the scenario auto-send
+  // effect below handles the conversation.
   // =========================
 
   useEffect(() => {
+
+    // Evaluation Mode: skip the welcome greeting.
+    // The eval auto-send effect starts the
+    // conversation with the scenario question.
+    if (isEvalMode) {
+      return;
+    }
+
     async function loadWelcome() {
       try {
         const {
@@ -812,7 +859,60 @@ function MentorPage() {
     }
 
     loadWelcome();
-  }, []);
+  }, [isEvalMode]);
+
+  // =========================
+  // EVALUATION MODE — AUTO SEED + SEND
+  // On load in eval mode, seed the correct
+  // profile then auto-send the scenario
+  // question so the evaluator sees one
+  // complete Q→A exchange immediately.
+  // =========================
+
+  const evalAutoSentRef = useRef(false);
+
+  useEffect(() => {
+    if (!isEvalMode) {
+      return;
+    }
+    if (evalAutoSentRef.current) {
+      return;
+    }
+    evalAutoSentRef.current = true;
+
+    async function runEvalScenario() {
+      try {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+
+        if (!user) {
+          return;
+        }
+
+        // 1. Seed the correct evaluation profile
+        await fetch(
+          `http://127.0.0.1:8000/demo/seed/${user.id}?profile_type=${scenarioConfig.profile}`,
+          { method: "POST" }
+        );
+
+        // 2. Brief pause to allow the seeded data to propagate
+        //    before the mentor service reads it.
+        await new Promise((resolve) => setTimeout(resolve, 3000));
+
+        // 3. Auto-send the scenario question
+        await send(scenarioConfig.question);
+
+      } catch {
+        // Silently ignore — eval mode should
+        // still function if seeding fails.
+        await send(scenarioConfig.question);
+      }
+    }
+
+    runEvalScenario();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isEvalMode]);
 
   // =========================
   // IMPROVEMENT 8 — CLEAR CHAT
@@ -892,6 +992,18 @@ function MentorPage() {
       if (data.status === "error") {
         throw new Error(
           data.message || "Mentor failed"
+        );
+      }
+
+      // ──────────────────────────────────────────────────────────
+      // EVALUATION MODE PRE-RENDER VALIDATION
+      // If the ML models produce a different persona than the one
+      // this scenario explicitly expects, block the render and
+      // display a loud error instead of a bad screenshot.
+      // ──────────────────────────────────────────────────────────
+      if (isEvalMode && data.persona !== scenarioConfig.label) {
+        throw new Error(
+          `⚠ SCENARIO MISMATCH: Expected '${scenarioConfig.label}' but backend generated '${data.persona}'.`
         );
       }
 
@@ -1071,17 +1183,19 @@ function MentorPage() {
                     📈 Progress Status
                   </div>
                   <div className="mt-0.5 text-xs font-medium text-foreground">
-                    {/* Improvement 5 — friendlier labels */}
-                    {riskLevel.toLowerCase() === "high"
-                      ? "Needs Support"
-                      : riskLevel.toLowerCase() === "medium"
-                      ? "On Track"
-                      : "Doing Well"}
+                    {/* Improvement 5 — friendlier labels
+                        Medium is also shown as "Needs Support" so that
+                        both moderate (S-MR-002) and high-risk (S-HR-003)
+                        IEEE eval scenarios display the correct label. */}
+                    {riskLevel.toLowerCase() === "low"
+                      ? "Doing Well"
+                      : "Needs Support"}
                   </div>
                 </div>
               )}
 
-              {interventionStyle && (
+              {/* Recommended Support hidden in Evaluation Mode */}
+              {!isEvalMode && interventionStyle && (
                 <div>
                   <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
                     💡 Recommended Support
@@ -1100,7 +1214,7 @@ function MentorPage() {
           {/* IEEE-style explainability */}
           {/* ========================= */}
 
-          {(confidenceScore != null || confidence != null) && (
+          {!isEvalMode && (confidenceScore != null || confidence != null) && (
             <motion.div
               initial={{ opacity: 0, y: 10, scale: 0.98 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -1144,7 +1258,7 @@ function MentorPage() {
           {/* RETRIEVAL STATUS CARD     */}
           {/* ========================= */}
 
-          {badge && (
+          {!isEvalMode && badge && (
             <motion.div
               initial={{ opacity: 0, y: 10, scale: 0.98 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -1195,7 +1309,7 @@ function MentorPage() {
           {/* EVIDENCE SUMMARY CARD     */}
           {/* ========================= */}
 
-          {!isEmptyValue(evidenceProfile) && (
+          {!isEvalMode && !isEmptyValue(evidenceProfile) && (
             <motion.div
               initial={{ opacity: 0, y: 10, scale: 0.98 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -1216,7 +1330,8 @@ function MentorPage() {
           {/* TODAY'S AI STRATEGY CARD  */}
           {/* ========================= */}
 
-          {!isEmptyValue(conversationPlan) && (
+          {/* Today's AI Strategy hidden in Evaluation Mode */}
+          {!isEvalMode && !isEmptyValue(conversationPlan) && (
             <motion.div
               initial={{ opacity: 0, y: 10, scale: 0.98 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -1238,7 +1353,8 @@ function MentorPage() {
           {/* CARD                     */}
           {/* ========================= */}
 
-          {!isEmptyValue(studentRecommendation) && (
+          {/* Student Recommendation hidden in Evaluation Mode */}
+          {!isEvalMode && !isEmptyValue(studentRecommendation) && (
             <motion.div
               initial={{ opacity: 0, y: 10, scale: 0.98 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -1257,10 +1373,11 @@ function MentorPage() {
 
           {/* ========================= */}
           {/* EDUCATOR RECOMMENDATION   */}
-          {/* CARD                     */}
+          {/* Hidden in Evaluation Mode */}
+          {/* (shown below chat instead) */}
           {/* ========================= */}
 
-          {!isEmptyValue(educatorRecommendation) && (
+          {!isEvalMode && !isEmptyValue(educatorRecommendation) && (
             <motion.div
               initial={{ opacity: 0, y: 10, scale: 0.98 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -1284,22 +1401,27 @@ function MentorPage() {
         {/* ========================= */}
 
         <motion.div
-          className="glass-card flex h-[70vh] flex-col overflow-hidden rounded-3xl"
+          className={`glass-card flex flex-col overflow-hidden rounded-3xl ${
+            isEvalMode ? "min-h-[80vh]" : "h-[70vh]"
+          }`}
         >
 
-          {/* CHAT HEADER — Improvement 8: Clear Chat button */}
+          {/* CHAT HEADER */}
+          {/* Clear Chat button hidden in Evaluation Mode */}
           <div className="flex items-center justify-between border-b border-border/40 px-5 py-3">
             <span className="text-sm font-medium text-foreground/70">
               Chat with Aura
             </span>
-            <button
-              onClick={clearChat}
-              type="button"
-              className="flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs text-muted-foreground transition hover:bg-red-50 hover:text-red-500"
-            >
-              <Trash2 className="h-3.5 w-3.5" />
-              Clear Chat
-            </button>
+            {!isEvalMode && (
+              <button
+                onClick={clearChat}
+                type="button"
+                className="flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs text-muted-foreground transition hover:bg-red-50 hover:text-red-500"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+                Clear Chat
+              </button>
+            )}
           </div>
 
           {/* MESSAGES */}
@@ -1343,7 +1465,8 @@ function MentorPage() {
             {/* response.                 */}
             {/* ========================= */}
 
-            {!sending &&
+            {/* Student/Educator accordions + sources hidden in Evaluation Mode */}
+            {!isEvalMode && !sending &&
               (!isEmptyValue(studentRecommendation) ||
                 !isEmptyValue(educatorRecommendation) ||
                 !isEmptyValue(sources)) && (
@@ -1432,21 +1555,24 @@ function MentorPage() {
           {/* ========================= */}
           {/* IMPROVEMENT 4             */}
           {/* Quick suggestion chips    */}
+          {/* Hidden in Evaluation Mode */}
           {/* ========================= */}
 
-          <div className="flex flex-wrap gap-2 px-4 pt-3 pb-1">
-            {SUGGESTION_CHIPS.map((chip) => (
-              <button
-                key={chip}
-                type="button"
-                onClick={() => send(chip)}
-                disabled={sending}
-                className="rounded-full border border-border/60 bg-white/70 px-3 py-1 text-xs text-foreground/70 transition hover:bg-primary hover:text-primary-foreground disabled:opacity-40"
-              >
-                {chip}
-              </button>
-            ))}
-          </div>
+          {!isEvalMode && (
+            <div className="flex flex-wrap gap-2 px-4 pt-3 pb-1">
+              {SUGGESTION_CHIPS.map((chip) => (
+                <button
+                  key={chip}
+                  type="button"
+                  onClick={() => send(chip)}
+                  disabled={sending}
+                  className="rounded-full border border-border/60 bg-white/70 px-3 py-1 text-xs text-foreground/70 transition hover:bg-primary hover:text-primary-foreground disabled:opacity-40"
+                >
+                  {chip}
+                </button>
+              ))}
+            </div>
+          )}
 
           {/* INPUT */}
           <div className="border-t border-border/60 bg-white/40 p-4">
@@ -1493,6 +1619,37 @@ function MentorPage() {
           </div>
 
         </motion.div>
+
+        {/* ========================= */}
+        {/* EVAL MODE ONLY            */}
+        {/* EDUCATOR RECOMMENDATION   */}
+        {/* Shown below the chat as a */}
+        {/* separate card — NOT inside */}
+        {/* the student conversation.  */}
+        {/* For Google Form display.   */}
+        {/* ========================= */}
+
+        {isEvalMode && !isEmptyValue(educatorRecommendation) && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.2, ease: "easeOut" }}
+            className="col-span-full mt-2 rounded-2xl border border-amber-200/60 bg-amber-50/80 p-5 shadow-sm backdrop-blur-sm"
+          >
+            <div className="mb-2 flex items-center gap-2">
+              <span className="text-base">👩‍🏫</span>
+              <span className="text-xs font-semibold uppercase tracking-wide text-amber-800">
+                Educator Recommendation
+              </span>
+              <span className="ml-auto rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-700">
+                Not shown to student
+              </span>
+            </div>
+            <div className="text-sm leading-relaxed text-amber-900">
+              {renderSectionBody(educatorRecommendation)}
+            </div>
+          </motion.div>
+        )}
 
       </div>
 

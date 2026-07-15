@@ -31,7 +31,7 @@ def seed_data(
 
     - user_id: The authenticated user's Supabase UUID
     - profile_type: One of 'anxiety_spike', 'burnout',
-                    'consistent', 'passive_watcher'
+                    'consistent', 'passive_watcher', 'last_minute'
     """
     return seed_demo_data(
         user_id,

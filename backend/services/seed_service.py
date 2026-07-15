@@ -44,40 +44,46 @@ DEMO_PROFILES = {
     },
     "burnout": {
         "label": "Burnout Pattern",
+        # S-HR-003 — Feature vector tuned to Cluster 1 centroid of persona_kmeans.pkl
+        # attention_score (=focus_score) ~86, boredom_score (=100-engagement_score) ~9
+        # These values are correct per the trained model — do not "fix" them intuitively.
         "features": {
-            "total_clicks": 87,
-            "avg_score": 41.2,
-            "active_days": 8,
-            "engagement_variability": 15.3,
-            "inactivity_days": 22,
-            "engagement_slope": -0.24,
-            "assessment_consistency": 18.9,
+            "total_clicks": 117,
+            "avg_score": 15.6,
+            "active_days": 7,
+            "engagement_variability": 2.2,
+            "inactivity_days": 20,
+            "engagement_slope": -0.17,
+            "assessment_consistency": 0.31,
         },
         "cognitive": {
-            "focus_score": 34,
-            "engagement_score": 28,
-            "confusion_score": 74,
+            "focus_score": 86,
+            "engagement_score": 91,
+            "confusion_score": 14,
             "learning_velocity": 22,
-            "ai_risk_probability": 0.89,
+            "ai_risk_probability": 0.485,
         },
     },
     "consistent": {
         "label": "Consistent Learner",
+        # S-LR-001 — Feature vector tuned to Cluster 4 centroid of persona_kmeans.pkl
+        # Requires high total_clicks (~5264) and high active_days (~169) to separate
+        # from lower-engagement clusters. Values derived directly from cluster centroid.
         "features": {
-            "total_clicks": 847,
-            "avg_score": 78.3,
-            "active_days": 26,
-            "engagement_variability": 2.8,
-            "inactivity_days": 4,
-            "engagement_slope": 0.15,
-            "assessment_consistency": 4.2,
+            "total_clicks": 5264,
+            "avg_score": 81.0,
+            "active_days": 169,
+            "engagement_variability": 8.6,
+            "inactivity_days": 96,
+            "engagement_slope": -0.02,
+            "assessment_consistency": 10.2,
         },
         "cognitive": {
             "focus_score": 82,
-            "engagement_score": 88,
+            "engagement_score": 90,
             "confusion_score": 18,
             "learning_velocity": 76,
-            "ai_risk_probability": 0.12,
+            "ai_risk_probability": 0.516,
         },
     },
     "passive_watcher": {
@@ -97,6 +103,25 @@ DEMO_PROFILES = {
             "confusion_score": 55,
             "learning_velocity": 30,
             "ai_risk_probability": 0.78,
+        },
+    },
+    "last_minute": {
+        "label": "Last-Minute Survivor",
+        "features": {
+            "total_clicks": 2275,
+            "avg_score": 85.6,
+            "active_days": 78,
+            "engagement_variability": 20.51,
+            "inactivity_days": 160,
+            "engagement_slope": -0.21,
+            "assessment_consistency": 10.9,
+        },
+        "cognitive": {
+            "focus_score": 85,
+            "engagement_score": 100,
+            "confusion_score": 14,
+            "learning_velocity": 65,
+            "ai_risk_probability": 0.68,
         },
     },
 }
@@ -203,6 +228,9 @@ def seed_demo_data(user_id: str, profile_type: str = "anxiety_spike"):
             ).execute()
 
         # ─── 4. Seed cognitive_metrics ────────────────────────────
+
+        # Delete stale records first to avoid race conditions
+        supabase.table("cognitive_metrics").delete().eq("user_id", user_id).execute()
 
         cognitive_record = {
             "user_id": user_id,

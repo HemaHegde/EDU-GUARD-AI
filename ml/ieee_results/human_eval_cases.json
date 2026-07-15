@@ -1,0 +1,536 @@
+{
+  "Low Risk": {
+    "anonymized_id": "S-LR-001",
+    "test_partition_index": 1416,
+    "risk": {
+      "predicted_probability": 0.012958,
+      "risk_score_0_100": 1,
+      "risk_level": "Low",
+      "predicted_class": 0,
+      "actual_label": 0,
+      "correct_prediction": true,
+      "risk_reasons": [
+        "High inactivity detected (60 days)"
+      ]
+    },
+    "features": {
+      "raw": {
+        "total_clicks": 7058.0,
+        "avg_score": 93.43478260869566,
+        "active_days": 220.0,
+        "engagement_variability": 6.6574463278006615,
+        "inactivity_days": 60.0,
+        "engagement_slope": 0.0745537506912625,
+        "assessment_consistency": 6.337665808887237
+      },
+      "display": {
+        "Total Interaction Clicks": 7058.0,
+        "Mean Assessment Score": 93.4348,
+        "Active Learning Days": 220.0,
+        "Engagement Variability": 6.6574,
+        "Inactivity Duration (days)": 60.0,
+        "Engagement Trend (Slope)": 0.0746,
+        "Assessment Consistency (SD)": 6.3377
+      }
+    },
+    "persona": {
+      "kmeans_cluster_id": 4,
+      "kmeans_persona_label": "Consistent Learner",
+      "heuristic_persona_label": "Passive Watcher",
+      "persona_used": "Consistent Learner",
+      "intervention_style": "Advanced learning opportunities"
+    },
+    "shap": {
+      "base_value": 0.120562,
+      "predicted_log_odds_contribution": -4.45357084274292,
+      "all_contributions": [
+        {
+          "feature": "Active Learning Days",
+          "feature_value": 220.0,
+          "shap_value": -3.05062,
+          "direction": "decreases_risk"
+        },
+        {
+          "feature": "Mean Assessment Score",
+          "feature_value": 93.4348,
+          "shap_value": -1.237964,
+          "direction": "decreases_risk"
+        },
+        {
+          "feature": "Inactivity Duration (days)",
+          "feature_value": 60.0,
+          "shap_value": 1.124759,
+          "direction": "increases_risk"
+        },
+        {
+          "feature": "Assessment Consistency (SD)",
+          "feature_value": 6.3377,
+          "shap_value": -0.59675,
+          "direction": "decreases_risk"
+        },
+        {
+          "feature": "Total Interaction Clicks",
+          "feature_value": 7058.0,
+          "shap_value": -0.478449,
+          "direction": "decreases_risk"
+        },
+        {
+          "feature": "Engagement Trend (Slope)",
+          "feature_value": 0.0746,
+          "shap_value": -0.197334,
+          "direction": "decreases_risk"
+        },
+        {
+          "feature": "Engagement Variability",
+          "feature_value": 6.6574,
+          "shap_value": -0.017214,
+          "direction": "decreases_risk"
+        }
+      ],
+      "top_3_risk_increasing": [
+        {
+          "feature": "Inactivity Duration (days)",
+          "feature_value": 60.0,
+          "shap_value": 1.124759,
+          "direction": "increases_risk"
+        }
+      ],
+      "top_3_protective": [
+        {
+          "feature": "Active Learning Days",
+          "feature_value": 220.0,
+          "shap_value": -3.05062,
+          "direction": "decreases_risk"
+        },
+        {
+          "feature": "Mean Assessment Score",
+          "feature_value": 93.4348,
+          "shap_value": -1.237964,
+          "direction": "decreases_risk"
+        },
+        {
+          "feature": "Assessment Consistency (SD)",
+          "feature_value": 6.3377,
+          "shap_value": -0.59675,
+          "direction": "decreases_risk"
+        }
+      ]
+    },
+    "cognitive_state": {
+      "available": true,
+      "data": {
+        "attention_score": 46.87416,
+        "confusion_score": 53.12584,
+        "boredom_score": 26.0,
+        "cognitive_overload_score": 73.0,
+        "stability_score": 55.738904557399785
+      },
+      "source": "Pre-computed from advanced_persona_profiles.csv (synthetic mapping of cognitive scores from the EdNet video intelligence pipeline to OULAD students via repeated tile mapping, as documented in advanced_persona_engine.py).",
+      "interpretation": {
+        "attention_score": "Higher = more attentive during learning sessions",
+        "confusion_score": "Higher = more confused (>70 triggers confusion priority focus)",
+        "boredom_score": "Higher = more bored/disengaged during sessions",
+        "cognitive_overload_score": "Higher = more cognitively overloaded",
+        "stability_score": "Higher = more behaviourally stable (0-100, derived composite)"
+      }
+    },
+    "confidence": {
+      "level": "High",
+      "rationale": "Risk score, SHAP-based feature explanation, and a known learner persona are all available, giving a quantified, explained, and contextualized basis for this response. Cognitive-state data was also available as a supporting signal.",
+      "has_risk_score": true,
+      "has_persona": true,
+      "has_shap": true,
+      "has_cognitive_state": true,
+      "needs_human_review": true,
+      "needs_human_review_reason": "needs_human_review=True: retrieval pipeline not available in offline extraction mode (normalized_score=0.0 < threshold 0.50). In live API, High-confidence cases may not require human review if retrieval similarity is sufficient."
+    },
+    "priority_focus": {
+      "id": "enrichment",
+      "instruction": "This learner is stable and not at elevated risk — lead with enrichment or a leadership opportunity. Do not use remedial or risk-reduction framing anywhere in your reply.",
+      "reason": "persona=Consistent Learner, risk_level=Low",
+      "student_action": "take on an enrichment activity or advanced topic — current performance supports it",
+      "educator_action": "consider this student for a peer-mentoring or leadership opportunity"
+    },
+    "recommendations": {
+      "student_recommendation": "take on an enrichment activity or advanced topic — current performance supports it",
+      "educator_recommendation": "consider this student for a peer-mentoring or leadership opportunity",
+      "psychological_framework": "SDT — enrichment and growth: affirm what is already working, then offer a stretch opportunity — advanced material, a peer-mentoring or leadership role — rather than remedial advice; this student does not need risk-reduction framing.",
+      "conversation_strategy": {
+        "opening_goal": "Affirm what's already working",
+        "teaching_style": "Forward-looking and growth-oriented; no risk or remedial framing",
+        "recommendation_style": "One stretch/enrichment opportunity",
+        "educator_goal": "Consider for a peer-mentoring or leadership role"
+      }
+    },
+    "behavioral_summary": [
+      "Actively logged in on 220 days (high engagement)",
+      "Extended inactivity: 60 days absent",
+      "Strong academic performance (avg score: 93.4)",
+      "Engagement trend: improving over time",
+      "Assessment performance consistent (SD=6.3)",
+      "High VLE interaction (7,058 total clicks)"
+    ],
+    "figures": {
+      "shap_waterfall": "ieee_results/figures/fig_f5_shap_waterfall_lowrisk.png",
+      "shap_importance_global": "ieee_results/figures/fig3_shap_importance.png",
+      "shap_beeswarm": "ieee_results/figures/fig4_shap_beeswarm.png",
+      "persona_clusters_tsne": "ieee_results/figures/fig_g2_tsne_clusters.png",
+      "shap_waterfall_generated": "D:\\EDU AI\\edu-ai\\ml\\ieee_results\\figures\\eval_waterfall_low_risk.png"
+    }
+  },
+  "Moderate Risk": {
+    "anonymized_id": "S-MR-002",
+    "test_partition_index": 5650,
+    "risk": {
+      "predicted_probability": 0.500399,
+      "risk_score_0_100": 50,
+      "risk_level": "Moderate",
+      "predicted_class": 1,
+      "actual_label": 0,
+      "correct_prediction": false,
+      "risk_reasons": [
+        "High inactivity detected (160 days)",
+        "Student engagement trend declining",
+        "Behavior fluctuation increasing"
+      ]
+    },
+    "features": {
+      "raw": {
+        "total_clicks": 2275.0,
+        "avg_score": 85.6,
+        "active_days": 78.0,
+        "engagement_variability": 20.513887846885453,
+        "inactivity_days": 160.0,
+        "engagement_slope": -0.2156492820879197,
+        "assessment_consistency": 10.89954127475097
+      },
+      "display": {
+        "Total Interaction Clicks": 2275.0,
+        "Mean Assessment Score": 85.6,
+        "Active Learning Days": 78.0,
+        "Engagement Variability": 20.5139,
+        "Inactivity Duration (days)": 160.0,
+        "Engagement Trend (Slope)": -0.2156,
+        "Assessment Consistency (SD)": 10.8995
+      }
+    },
+    "persona": {
+      "kmeans_cluster_id": 5,
+      "kmeans_persona_label": "Last-Minute Survivor",
+      "heuristic_persona_label": "Passive Watcher",
+      "persona_used": "Last-Minute Survivor",
+      "intervention_style": "Deadline management coaching"
+    },
+    "shap": {
+      "base_value": 0.120562,
+      "predicted_log_odds_contribution": -0.11896400153636932,
+      "all_contributions": [
+        {
+          "feature": "Engagement Trend (Slope)",
+          "feature_value": -0.2156,
+          "shap_value": 1.554647,
+          "direction": "increases_risk"
+        },
+        {
+          "feature": "Assessment Consistency (SD)",
+          "feature_value": 10.8995,
+          "shap_value": -0.480216,
+          "direction": "decreases_risk"
+        },
+        {
+          "feature": "Inactivity Duration (days)",
+          "feature_value": 160.0,
+          "shap_value": -0.461886,
+          "direction": "decreases_risk"
+        },
+        {
+          "feature": "Mean Assessment Score",
+          "feature_value": 85.6,
+          "shap_value": -0.422001,
+          "direction": "decreases_risk"
+        },
+        {
+          "feature": "Active Learning Days",
+          "feature_value": 78.0,
+          "shap_value": -0.188771,
+          "direction": "decreases_risk"
+        },
+        {
+          "feature": "Total Interaction Clicks",
+          "feature_value": 2275.0,
+          "shap_value": -0.069,
+          "direction": "decreases_risk"
+        },
+        {
+          "feature": "Engagement Variability",
+          "feature_value": 20.5139,
+          "shap_value": -0.051738,
+          "direction": "decreases_risk"
+        }
+      ],
+      "top_3_risk_increasing": [
+        {
+          "feature": "Engagement Trend (Slope)",
+          "feature_value": -0.2156,
+          "shap_value": 1.554647,
+          "direction": "increases_risk"
+        }
+      ],
+      "top_3_protective": [
+        {
+          "feature": "Assessment Consistency (SD)",
+          "feature_value": 10.8995,
+          "shap_value": -0.480216,
+          "direction": "decreases_risk"
+        },
+        {
+          "feature": "Inactivity Duration (days)",
+          "feature_value": 160.0,
+          "shap_value": -0.461886,
+          "direction": "decreases_risk"
+        },
+        {
+          "feature": "Mean Assessment Score",
+          "feature_value": 85.6,
+          "shap_value": -0.422001,
+          "direction": "decreases_risk"
+        }
+      ]
+    },
+    "cognitive_state": {
+      "available": true,
+      "data": {
+        "attention_score": 85.7576,
+        "confusion_score": 14.242406,
+        "boredom_score": 0.0,
+        "cognitive_overload_score": 68.0,
+        "stability_score": 65.74790205103818
+      },
+      "source": "Pre-computed from advanced_persona_profiles.csv (synthetic mapping of cognitive scores from the EdNet video intelligence pipeline to OULAD students via repeated tile mapping, as documented in advanced_persona_engine.py).",
+      "interpretation": {
+        "attention_score": "Higher = more attentive during learning sessions",
+        "confusion_score": "Higher = more confused (>70 triggers confusion priority focus)",
+        "boredom_score": "Higher = more bored/disengaged during sessions",
+        "cognitive_overload_score": "Higher = more cognitively overloaded",
+        "stability_score": "Higher = more behaviourally stable (0-100, derived composite)"
+      }
+    },
+    "confidence": {
+      "level": "High",
+      "rationale": "Risk score, SHAP-based feature explanation, and a known learner persona are all available, giving a quantified, explained, and contextualized basis for this response. Cognitive-state data was also available as a supporting signal.",
+      "has_risk_score": true,
+      "has_persona": true,
+      "has_shap": true,
+      "has_cognitive_state": true,
+      "needs_human_review": true,
+      "needs_human_review_reason": "needs_human_review=True: retrieval pipeline not available in offline extraction mode (normalized_score=0.0 < threshold 0.50). In live API, High-confidence cases may not require human review if retrieval similarity is sufficient."
+    },
+    "priority_focus": {
+      "id": "inactivity",
+      "instruction": "Inactivity is the strongest measured risk driver — anchor advice on resuming regular activity, not general study tips.",
+      "reason": "inactivity_days=160.0 (>15 days threshold)",
+      "student_action": "log in and complete one small piece of coursework today to break the inactivity streak, then build back up gradually",
+      "educator_action": "reach out directly — inactivity is the strongest measured driver of this student's risk"
+    },
+    "recommendations": {
+      "student_recommendation": "set a specific If-Then plan (e.g. 'after dinner, review one topic') to space out revision before the deadline",
+      "educator_recommendation": "consider a scaffolded reminder or interim checkpoint ahead of the next deadline",
+      "psychological_framework": "Implementation Intentions — planning: propose a concrete If-Then study micro-habit tied to a specific deadline, recommend spaced revision over cramming, and name the cognitive-load cost of leaving it to the last minute.",
+      "conversation_strategy": {
+        "opening_goal": "Welcome back, non-judgmental",
+        "teaching_style": "Focus on restarting momentum, not catching up all at once",
+        "recommendation_style": "One tiny piece of coursework today, to break the streak",
+        "educator_goal": "Reach out directly given the inactivity pattern"
+      }
+    },
+    "behavioral_summary": [
+      "Actively logged in on 78 days (high engagement)",
+      "Extended inactivity: 160 days absent",
+      "Strong academic performance (avg score: 85.6)",
+      "Engagement trend: declining over time",
+      "Assessment performance moderately inconsistent (SD=10.9)",
+      "High VLE interaction (2,275 total clicks)"
+    ],
+    "figures": {
+      "shap_waterfall": "ieee_results/figures/fig_f6_shap_waterfall_borderline.png",
+      "shap_importance_global": "ieee_results/figures/fig3_shap_importance.png",
+      "shap_beeswarm": "ieee_results/figures/fig4_shap_beeswarm.png",
+      "persona_clusters_tsne": "ieee_results/figures/fig_g2_tsne_clusters.png",
+      "shap_waterfall_generated": "D:\\EDU AI\\edu-ai\\ml\\ieee_results\\figures\\eval_waterfall_moderate_risk.png"
+    }
+  },
+  "High Risk": {
+    "anonymized_id": "S-HR-003",
+    "test_partition_index": 3131,
+    "risk": {
+      "predicted_probability": 0.999792,
+      "risk_score_0_100": 99,
+      "risk_level": "High",
+      "predicted_class": 1,
+      "actual_label": 1,
+      "correct_prediction": true,
+      "risk_reasons": [
+        "High inactivity detected (32 days)",
+        "Student engagement trend declining",
+        "Academic performance weakening"
+      ]
+    },
+    "features": {
+      "raw": {
+        "total_clicks": 312.0,
+        "avg_score": 1.0,
+        "active_days": 24.0,
+        "engagement_variability": 2.784120933308317,
+        "inactivity_days": 32.0,
+        "engagement_slope": -0.3036233723840267,
+        "assessment_consistency": 0.0
+      },
+      "display": {
+        "Total Interaction Clicks": 312.0,
+        "Mean Assessment Score": 1.0,
+        "Active Learning Days": 24.0,
+        "Engagement Variability": 2.7841,
+        "Inactivity Duration (days)": 32.0,
+        "Engagement Trend (Slope)": -0.3036,
+        "Assessment Consistency (SD)": 0.0
+      }
+    },
+    "persona": {
+      "kmeans_cluster_id": 1,
+      "kmeans_persona_label": "Burnout Pattern",
+      "heuristic_persona_label": "Burnout Pattern",
+      "persona_used": "Burnout Pattern",
+      "intervention_style": "Mental wellness intervention"
+    },
+    "shap": {
+      "base_value": 0.120562,
+      "predicted_log_odds_contribution": 8.356955528259277,
+      "all_contributions": [
+        {
+          "feature": "Inactivity Duration (days)",
+          "feature_value": 32.0,
+          "shap_value": 2.26,
+          "direction": "increases_risk"
+        },
+        {
+          "feature": "Assessment Consistency (SD)",
+          "feature_value": 0.0,
+          "shap_value": 1.924236,
+          "direction": "increases_risk"
+        },
+        {
+          "feature": "Mean Assessment Score",
+          "feature_value": 1.0,
+          "shap_value": 1.72069,
+          "direction": "increases_risk"
+        },
+        {
+          "feature": "Active Learning Days",
+          "feature_value": 24.0,
+          "shap_value": 1.378655,
+          "direction": "increases_risk"
+        },
+        {
+          "feature": "Engagement Trend (Slope)",
+          "feature_value": -0.3036,
+          "shap_value": 0.685312,
+          "direction": "increases_risk"
+        },
+        {
+          "feature": "Total Interaction Clicks",
+          "feature_value": 312.0,
+          "shap_value": 0.315064,
+          "direction": "increases_risk"
+        },
+        {
+          "feature": "Engagement Variability",
+          "feature_value": 2.7841,
+          "shap_value": 0.072999,
+          "direction": "increases_risk"
+        }
+      ],
+      "top_3_risk_increasing": [
+        {
+          "feature": "Inactivity Duration (days)",
+          "feature_value": 32.0,
+          "shap_value": 2.26,
+          "direction": "increases_risk"
+        },
+        {
+          "feature": "Assessment Consistency (SD)",
+          "feature_value": 0.0,
+          "shap_value": 1.924236,
+          "direction": "increases_risk"
+        },
+        {
+          "feature": "Mean Assessment Score",
+          "feature_value": 1.0,
+          "shap_value": 1.72069,
+          "direction": "increases_risk"
+        }
+      ],
+      "top_3_protective": []
+    },
+    "cognitive_state": {
+      "available": true,
+      "data": {
+        "attention_score": 77.56513,
+        "confusion_score": 22.434866,
+        "boredom_score": 10.0,
+        "cognitive_overload_score": 64.99999999999999,
+        "stability_score": 69.9270043555639
+      },
+      "source": "Pre-computed from advanced_persona_profiles.csv (synthetic mapping of cognitive scores from the EdNet video intelligence pipeline to OULAD students via repeated tile mapping, as documented in advanced_persona_engine.py).",
+      "interpretation": {
+        "attention_score": "Higher = more attentive during learning sessions",
+        "confusion_score": "Higher = more confused (>70 triggers confusion priority focus)",
+        "boredom_score": "Higher = more bored/disengaged during sessions",
+        "cognitive_overload_score": "Higher = more cognitively overloaded",
+        "stability_score": "Higher = more behaviourally stable (0-100, derived composite)"
+      }
+    },
+    "confidence": {
+      "level": "High",
+      "rationale": "Risk score, SHAP-based feature explanation, and a known learner persona are all available, giving a quantified, explained, and contextualized basis for this response. Cognitive-state data was also available as a supporting signal.",
+      "has_risk_score": true,
+      "has_persona": true,
+      "has_shap": true,
+      "has_cognitive_state": true,
+      "needs_human_review": true,
+      "needs_human_review_reason": "needs_human_review=True: retrieval pipeline not available in offline extraction mode (normalized_score=0.0 < threshold 0.50). In live API, High-confidence cases may not require human review if retrieval similarity is sufficient."
+    },
+    "priority_focus": {
+      "id": "burnout",
+      "instruction": "Burnout risk is severe — prioritize workload reduction and recovery over anything else; do not assign new work.",
+      "reason": "persona=Burnout Pattern, risk_level=High",
+      "student_action": "reduce your workload this week and schedule one real recovery break before your next study session",
+      "educator_action": "flag for a workload/wellness check-in; consider a short extension or reduced load"
+    },
+    "recommendations": {
+      "student_recommendation": "reduce your workload this week and schedule one real recovery break before your next study session",
+      "educator_recommendation": "flag for a workload/wellness check-in; consider a short extension or reduced load",
+      "psychological_framework": "CBT — workload reduction and recovery: break tasks into tiny steps, challenge all-or-nothing thinking, explicitly recommend reducing load this week and building in a recovery break; flag for educator outreach rather than pushing more output.",
+      "conversation_strategy": {
+        "opening_goal": "Reassure and validate; do not push more work",
+        "teaching_style": "Brief, low-pressure, permission-giving tone",
+        "recommendation_style": "One recovery-oriented micro-action",
+        "educator_goal": "Flag for a workload/wellness check-in"
+      }
+    },
+    "behavioral_summary": [
+      "Actively logged in on 24 days (high engagement)",
+      "Extended inactivity: 32 days absent",
+      "Weakening academic performance (avg score: 1.0)",
+      "Engagement trend: declining over time",
+      "Assessment performance consistent (SD=0.0)",
+      "Moderate VLE interaction (312 total clicks)"
+    ],
+    "figures": {
+      "shap_waterfall": "ieee_results/figures/fig_f4_shap_waterfall_highrisk.png",
+      "shap_importance_global": "ieee_results/figures/fig3_shap_importance.png",
+      "shap_beeswarm": "ieee_results/figures/fig4_shap_beeswarm.png",
+      "persona_clusters_tsne": "ieee_results/figures/fig_g2_tsne_clusters.png",
+      "shap_waterfall_generated": "D:\\EDU AI\\edu-ai\\ml\\ieee_results\\figures\\eval_waterfall_high_risk.png"
+    }
+  }
+}
